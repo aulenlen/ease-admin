@@ -260,6 +260,12 @@
       "comment": "Comment",
       "articlePublish": "Article Publish"
     },
+    "product": {
+      "title": "Product",
+      "brand": "Brand",
+      "brandCreate": "Create Brand",
+      "brandEdit": "Edit Brand"
+    },
     "result": {
       "title": "Result Page",
       "success": "Success",

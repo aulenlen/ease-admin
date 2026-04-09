@@ -20,8 +20,7 @@
           <ElButton type="danger" plain v-ripple>清除</ElButton>
         </template>
         <template #confirm>
-          <!-- <ElButton type="primary" style="margin-left: 10px">确定</ElButton> -->
-          <div></div>
+          <ElButton type="primary" plain v-ripple>{{ confirmText }}</ElButton>
         </template>
       </ImgCutter>
     </div>
@@ -37,7 +36,12 @@
       >
         <img class="preview-img" :src="temImgPath" alt="预览图" v-if="temImgPath" />
       </div>
-      <ElButton class="download-btn" @click="downloadImg" :disabled="!temImgPath" v-ripple
+      <ElButton
+        v-if="showDownload"
+        class="download-btn"
+        @click="downloadImg"
+        :disabled="!temImgPath"
+        v-ripple
         >下载图片</ElButton
       >
     </div>
@@ -61,8 +65,12 @@
     title?: string
     /** 预览标题 */
     previewTitle?: string
+    /** 确认按钮文本 */
+    confirmText?: string
     /** 是否显示预览 */
     showPreview?: boolean
+    /** 是否显示下载按钮 */
+    showDownload?: boolean
 
     // 尺寸相关
     /** 容器宽度 */
@@ -73,6 +81,8 @@
     cutWidth?: number
     /** 裁剪高度 */
     cutHeight?: number
+    /** 固定裁剪比例，例如 16:9 */
+    rate?: string
     /** 是否允许大小调整 */
     sizeChange?: boolean
 
@@ -126,7 +136,9 @@
     toolBgc: '#fff',
     title: '',
     previewTitle: '',
+    confirmText: '确定',
     showPreview: true,
+    showDownload: true,
 
     // 尺寸相关默认值
     boxWidth: 700,
@@ -156,7 +168,14 @@
     previewMode: true
   })
 
-  const emit = defineEmits(['update:imgUrl', 'error', 'imageLoadComplete', 'imageLoadError'])
+  const emit = defineEmits([
+    'update:imgUrl',
+    'cut-done',
+    'preview-change',
+    'error',
+    'imageLoadComplete',
+    'imageLoadError'
+  ])
 
   const temImgPath = ref('')
   const imgCutterModal = ref()
@@ -218,11 +237,13 @@
   // 实时预览
   function cutterPrintImg(result: { dataURL: string }) {
     temImgPath.value = result.dataURL
+    emit('preview-change', result)
   }
 
   // 裁剪完成
   function cutDownImg(result: CutterResult) {
     emit('update:imgUrl', result.dataURL)
+    emit('cut-done', result)
   }
 
   // 图片加载完成
@@ -239,6 +260,7 @@
   // 清除所有
   function handleClearAll() {
     temImgPath.value = ''
+    emit('preview-change', { dataURL: '' })
   }
 
   // 下载图片
@@ -255,20 +277,28 @@
   .cutter-container {
     display: flex;
     flex-flow: row wrap;
+    gap: 28px;
+    align-items: flex-start;
 
     .title {
       padding-bottom: 10px;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 500;
     }
 
     .cutter-component {
-      margin-right: 30px;
+      flex: 0 0 auto;
+      min-width: 0;
     }
 
     .preview-container {
       .preview-box {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        overflow: hidden;
         background-color: var(--art-active-color) !important;
+        border-radius: 6px;
 
         .preview-img {
           width: 100%;
@@ -302,7 +332,29 @@
     }
 
     :deep(.i-dialog-footer) {
-      margin-top: 60px !important;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: flex-end;
+      height: auto !important;
+      margin-top: 28px !important;
+    }
+
+    :deep(.i-dialog-footer > span) {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    :deep(.i-dialog-footer .btn-group) {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      float: none;
+    }
+
+    :deep(.i-dialog-footer .btn-group > span) {
+      display: inline-flex;
+      align-items: center;
     }
 
     :deep(.dockBtn) {
@@ -345,6 +397,13 @@
           border: transparent;
         }
       }
+    }
+  }
+
+  @media (width <= 1024px) {
+    .cutter-container {
+      flex-direction: column;
+      gap: 20px;
     }
   }
 </style>
