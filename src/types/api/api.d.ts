@@ -93,24 +93,43 @@ declare namespace Api {
     /** 用户列表项 */
     interface UserListItem {
       id: number
+      username: string
       avatar: string
-      status: string
+      icon?: string
+      status: number | string
       userName: string
       userGender: string
       nickName: string
       userPhone: string
+      email: string
       userEmail: string
+      note?: string
       userRoles: string[]
       createBy: string
       createTime: string
+      loginTime?: string
       updateBy: string
       updateTime: string
+    }
+
+    interface UserSavePayload {
+      id?: number
+      username: string
+      password?: string
+      icon?: string
+      email?: string
+      nickName?: string
+      note?: string
+      status?: number
+      roleIds?: number[]
     }
 
     /** 用户搜索参数 */
     type UserSearchParams = Partial<
       Pick<UserListItem, 'id' | 'userName' | 'userGender' | 'userPhone' | 'userEmail' | 'status'> &
-        Api.Common.CommonSearchParams
+        Api.Common.CommonSearchParams & {
+          keyword: string
+        }
     >
 
     /** 角色列表 */
@@ -118,18 +137,24 @@ declare namespace Api {
 
     /** 角色列表项 */
     interface RoleListItem {
+      id?: number
       roleId: number
+      name?: string
       roleName: string
       roleCode: string
       description: string
+      adminCount?: number
+      status?: number
       enabled: boolean
       createTime: string
+      sort?: number
     }
 
     /** 角色搜索参数 */
     type RoleSearchParams = Partial<
       Pick<RoleListItem, 'roleId' | 'roleName' | 'roleCode' | 'description' | 'enabled'> &
         Api.Common.CommonSearchParams & {
+          keyword: string
           startTime: string | null
           endTime: string | null
         }

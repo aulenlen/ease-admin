@@ -32,3 +32,6 @@ export * from './form'
 
 // socket 相关
 export * from './socket'
+
+// 日期相关
+export * from './date'

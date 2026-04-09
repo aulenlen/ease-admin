@@ -67,6 +67,7 @@
   } from '@/api/brand'
   import { useTable } from '@/hooks/core/useTable'
   import type { DialogType } from '@/types'
+  import { formatDateTime } from '@/utils/date'
   import BrandSearch from './modules/brand-search.vue'
   import BrandDialog from './modules/brand-dialog.vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
@@ -269,11 +270,5 @@
     await updateShowStatus(selectedBrandIds.value, showStatus)
     selectedBrandIds.value = []
     refreshData()
-  }
-
-  const formatDateTime = (value?: string) => {
-    if (!value) return '-'
-    const normalized = String(value).replace('T', ' ')
-    return normalized.slice(0, 19)
   }
 </script>
