@@ -4,6 +4,11 @@ dist
 dist-ssr
 *.local
 .cursorrules
+.idea
+*.iml
+node_modules/
+dist/
+AGENTS.md
 
 # Auto-generated files
 src/types/import/auto-imports.d.ts
