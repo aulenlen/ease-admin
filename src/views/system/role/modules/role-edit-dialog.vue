@@ -2,37 +2,55 @@
   <ElDialog
     v-model="visible"
     :title="dialogType === 'add' ? '新增角色' : '编辑角色'"
-    width="30%"
+    width="36%"
     align-center
-    @close="handleClose"
+    destroy-on-close
+    @closed="handleClose"
   >
-    <ElForm ref="formRef" :model="form" :rules="rules" label-width="120px">
-      <ElFormItem label="角色名称" prop="roleName">
-        <ElInput v-model="form.roleName" placeholder="请输入角色名称" />
+    <ElForm ref="formRef" :model="form" :rules="rules" label-position="top">
+      <ElFormItem label="角色名称" prop="name">
+        <ElInput v-model.trim="form.name" placeholder="请输入角色名称" />
       </ElFormItem>
+
       <ElFormItem label="角色编码" prop="roleCode">
-        <ElInput v-model="form.roleCode" placeholder="请输入角色编码" />
+        <ElInput v-model.trim="form.roleCode" placeholder="请输入角色编码" />
       </ElFormItem>
-      <ElFormItem label="描述" prop="description">
+
+      <ElFormItem label="角色描述" prop="description">
         <ElInput
-          v-model="form.description"
+          v-model.trim="form.description"
           type="textarea"
           :rows="3"
+          maxlength="500"
+          show-word-limit
           placeholder="请输入角色描述"
         />
       </ElFormItem>
-      <ElFormItem label="启用">
-        <ElSwitch v-model="form.enabled" />
+
+      <ElFormItem label="启用状态" prop="status">
+        <ElSwitch v-model="form.status" :active-value="1" :inactive-value="0" />
+      </ElFormItem>
+
+      <ElFormItem label="排序" prop="sort">
+        <ElInputNumber
+          v-model="form.sort"
+          :min="0"
+          :max="999"
+          controls-position="right"
+          class="w-full"
+        />
       </ElFormItem>
     </ElForm>
+
     <template #footer>
       <ElButton @click="handleClose">取消</ElButton>
-      <ElButton type="primary" @click="handleSubmit">提交</ElButton>
+      <ElButton type="primary" :loading="submitting" @click="handleSubmit">提交</ElButton>
     </template>
   </ElDialog>
 </template>
 
 <script setup lang="ts">
+  import { fetchCreateRole, fetchUpdateRole } from '@/api/system-manage'
   import type { FormInstance, FormRules } from 'element-plus'
 
   type RoleListItem = Api.SystemManage.RoleListItem
@@ -55,108 +73,92 @@
   })
 
   const emit = defineEmits<Emits>()
-
   const formRef = ref<FormInstance>()
+  const submitting = ref(false)
 
-  /**
-   * 弹窗显示状态双向绑定
-   */
   const visible = computed({
     get: () => props.modelValue,
     set: (value) => emit('update:modelValue', value)
   })
 
-  /**
-   * 表单验证规则
-   */
-  const rules = reactive<FormRules>({
-    roleName: [
-      { required: true, message: '请输入角色名称', trigger: 'blur' },
-      { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
-    ],
-    roleCode: [
-      { required: true, message: '请输入角色编码', trigger: 'blur' },
-      { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
-    ],
-    description: [{ required: true, message: '请输入角色描述', trigger: 'blur' }]
-  })
-
-  /**
-   * 表单数据
-   */
-  const form = reactive<RoleListItem>({
-    roleId: 0,
-    roleName: '',
+  const defaultForm: Api.SystemManage.RoleSavePayload = {
+    id: undefined,
+    name: '',
     roleCode: '',
     description: '',
-    createTime: '',
-    enabled: true
+    status: 1,
+    sort: 0
+  }
+
+  const form = reactive<Api.SystemManage.RoleSavePayload>({ ...defaultForm })
+
+  const rules = reactive<FormRules>({
+    name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
+    roleCode: [{ required: true, message: '请输入角色编码', trigger: 'blur' }]
   })
 
-  /**
-   * 监听弹窗打开，初始化表单数据
-   */
-  watch(
-    () => props.modelValue,
-    (newVal) => {
-      if (newVal) initForm()
-    }
-  )
-
-  /**
-   * 监听角色数据变化，更新表单
-   */
-  watch(
-    () => props.roleData,
-    (newData) => {
-      if (newData && props.modelValue) initForm()
-    },
-    { deep: true }
-  )
-
-  /**
-   * 初始化表单数据
-   * 根据弹窗类型填充表单或重置表单
-   */
-  const initForm = () => {
+  function initForm() {
     if (props.dialogType === 'edit' && props.roleData) {
-      Object.assign(form, props.roleData)
-    } else {
       Object.assign(form, {
-        roleId: 0,
-        roleName: '',
-        roleCode: '',
-        description: '',
-        createTime: '',
-        enabled: true
+        id: props.roleData.id ?? props.roleData.roleId,
+        name: props.roleData.name || props.roleData.roleName || '',
+        roleCode: props.roleData.roleCode || '',
+        description: props.roleData.description || '',
+        status: props.roleData.status ?? (props.roleData.enabled ? 1 : 0),
+        sort: props.roleData.sort ?? 0
       })
+    } else {
+      Object.assign(form, { ...defaultForm })
     }
   }
 
-  /**
-   * 关闭弹窗并重置表单
-   */
-  const handleClose = () => {
+  function handleClose() {
     visible.value = false
     formRef.value?.resetFields()
   }
 
-  /**
-   * 提交表单
-   * 验证通过后调用接口保存数据
-   */
-  const handleSubmit = async () => {
+  async function handleSubmit() {
     if (!formRef.value) return
 
+    await formRef.value.validate()
+    submitting.value = true
+
     try {
-      await formRef.value.validate()
-      // TODO: 调用新增/编辑接口
-      const message = props.dialogType === 'add' ? '新增成功' : '修改成功'
-      ElMessage.success(message)
+      const payload: Api.SystemManage.RoleSavePayload = {
+        id: form.id,
+        name: String(form.name || '').trim(),
+        roleCode: String(form.roleCode || '')
+          .trim()
+          .toUpperCase(),
+        description: String(form.description || '').trim(),
+        status: Number(form.status ?? 1),
+        sort: Number(form.sort ?? 0)
+      }
+
+      if (props.dialogType === 'add') {
+        await fetchCreateRole(payload)
+      } else {
+        await fetchUpdateRole(payload)
+      }
+
+      ElMessage.success(props.dialogType === 'add' ? '新增成功' : '修改成功')
       emit('success')
       handleClose()
-    } catch (error) {
-      console.log('表单验证失败:', error)
+    } finally {
+      submitting.value = false
     }
   }
+
+  watch(
+    () => [props.modelValue, props.dialogType, props.roleData],
+    ([opened]) => {
+      if (opened) {
+        initForm()
+        nextTick(() => {
+          formRef.value?.clearValidate()
+        })
+      }
+    },
+    { immediate: true }
+  )
 </script>

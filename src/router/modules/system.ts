@@ -61,6 +61,17 @@ export const systemRoutes: AppRouteRecord = {
       }
     },
     {
+      path: 'resource',
+      name: 'Resource',
+      component: '/system/resource',
+      meta: {
+        title: 'menus.system.resource',
+        icon: 'ri:database-2-line',
+        keepAlive: true,
+        roles: ['R_SUPER']
+      }
+    },
+    {
       path: 'nested',
       name: 'Nested',
       component: '',

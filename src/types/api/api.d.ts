@@ -150,6 +150,20 @@ declare namespace Api {
       sort?: number
     }
 
+    interface RoleDetailItem extends RoleListItem {
+      menuIds: number[]
+      resourceIds: number[]
+    }
+
+    interface RoleSavePayload {
+      id?: number
+      name: string
+      roleCode: string
+      description?: string
+      status?: number
+      sort?: number
+    }
+
     /** 角色搜索参数 */
     type RoleSearchParams = Partial<
       Pick<RoleListItem, 'roleId' | 'roleName' | 'roleCode' | 'description' | 'enabled'> &
@@ -158,6 +172,60 @@ declare namespace Api {
           startTime: string | null
           endTime: string | null
         }
+    >
+
+    interface MenuTreeItem {
+      id: number
+      parentId: number
+      createTime?: string
+      title: string
+      level: number
+      sort: number
+      name: string
+      icon?: string
+      hidden: number
+      children?: MenuTreeItem[]
+    }
+
+    interface MenuSavePayload {
+      id?: number
+      parentId: number
+      title: string
+      level?: number
+      sort?: number
+      name?: string
+      icon?: string
+      hidden?: number
+    }
+
+    type ResourceList = Api.Common.PaginatedResponse<ResourceListItem>
+
+    interface ResourceListItem {
+      id: number
+      createTime?: string
+      name: string
+      url: string
+      description?: string
+      categoryId: number
+    }
+
+    interface ResourceCategoryItem {
+      id: number
+      createTime?: string
+      name: string
+      sort: number
+    }
+
+    interface ResourceSavePayload {
+      id?: number
+      name: string
+      url: string
+      description?: string
+      categoryId?: number
+    }
+
+    type ResourceSearchParams = Partial<
+      Pick<ResourceListItem, 'name' | 'url' | 'categoryId'> & Api.Common.CommonSearchParams
     >
   }
 }

@@ -1,12 +1,11 @@
-<!-- 角色管理页面 -->
 <template>
   <div class="art-full-height">
     <RoleSearch
       v-show="showSearchBar"
       v-model="searchForm"
       @search="handleSearch"
-      @reset="resetSearchParams"
-    ></RoleSearch>
+      @reset="handleResetSearch"
+    />
 
     <ElCard class="art-table-card" :style="{ 'margin-top': showSearchBar ? '12px' : '0' }">
       <ArtTableHeader
@@ -22,7 +21,6 @@
         </template>
       </ArtTableHeader>
 
-      <!-- 表格 -->
       <ArtTable
         :loading="loading"
         :data="data"
@@ -30,11 +28,9 @@
         :pagination="pagination"
         @pagination:size-change="handleSizeChange"
         @pagination:current-change="handleCurrentChange"
-      >
-      </ArtTable>
+      />
     </ElCard>
 
-    <!-- 角色编辑弹窗 -->
     <RoleEditDialog
       v-model="dialogVisible"
       :dialog-type="dialogType"
@@ -42,9 +38,14 @@
       @success="refreshData"
     />
 
-    <!-- 菜单权限弹窗 -->
     <RolePermissionDialog
       v-model="permissionDialog"
+      :role-data="currentRoleData"
+      @success="refreshData"
+    />
+
+    <RoleResourceDialog
+      v-model="resourceDialog"
       :role-data="currentRoleData"
       @success="refreshData"
     />
@@ -54,33 +55,27 @@
 <script setup lang="ts">
   import { ButtonMoreItem } from '@/components/core/forms/art-button-more/index.vue'
   import { useTable } from '@/hooks/core/useTable'
-  import { fetchGetRoleList } from '@/api/system-manage'
+  import { fetchDeleteRole, fetchGetRoleList, fetchUpdateRoleStatus } from '@/api/system-manage'
+  import { formatDateTime } from '@/utils/date'
   import ArtButtonMore from '@/components/core/forms/art-button-more/index.vue'
   import RoleSearch from './modules/role-search.vue'
   import RoleEditDialog from './modules/role-edit-dialog.vue'
   import RolePermissionDialog from './modules/role-permission-dialog.vue'
+  import RoleResourceDialog from './modules/role-resource-dialog.vue'
   import { ElTag, ElMessageBox } from 'element-plus'
 
   defineOptions({ name: 'Role' })
 
   type RoleListItem = Api.SystemManage.RoleListItem
-  type RoleSearchFormParams = Api.SystemManage.RoleSearchParams & {
-    daterange?: string[]
-  }
 
-  // 搜索表单
-  const searchForm = ref<RoleSearchFormParams>({
-    roleName: undefined,
-    roleCode: undefined,
-    description: undefined,
-    enabled: undefined,
-    daterange: undefined
+  const searchForm = ref<Api.SystemManage.RoleSearchParams>({
+    keyword: undefined
   })
 
   const showSearchBar = ref(false)
-
   const dialogVisible = ref(false)
   const permissionDialog = ref(false)
+  const resourceDialog = ref(false)
   const currentRoleData = ref<RoleListItem | undefined>(undefined)
 
   const {
@@ -96,15 +91,12 @@
     handleCurrentChange,
     refreshData
   } = useTable({
-    // 核心配置
     core: {
       apiFn: fetchGetRoleList,
       apiParams: {
         current: 1,
         size: 20
       },
-      // 排除 apiParams 中的属性
-      excludeParams: ['daterange'],
       columnsFactory: () => [
         {
           prop: 'roleId',
@@ -114,39 +106,45 @@
         {
           prop: 'roleName',
           label: '角色名称',
-          minWidth: 120
+          minWidth: 140
         },
         {
           prop: 'roleCode',
           label: '角色编码',
-          minWidth: 120
+          minWidth: 140
         },
         {
           prop: 'description',
           label: '角色描述',
-          minWidth: 150,
+          minWidth: 180,
           showOverflowTooltip: true
+        },
+        {
+          prop: 'adminCount',
+          label: '用户数',
+          width: 100
         },
         {
           prop: 'enabled',
           label: '角色状态',
           width: 100,
-          formatter: (row) => {
-            const statusConfig = row.enabled
-              ? { type: 'success', text: '启用' }
-              : { type: 'warning', text: '禁用' }
-            return h(
+          formatter: (row) =>
+            h(
               ElTag,
-              { type: statusConfig.type as 'success' | 'warning' },
-              () => statusConfig.text
+              {
+                type: row.enabled ? 'success' : 'warning',
+                class: 'cursor-pointer',
+                onClick: () => toggleRoleStatus(row)
+              },
+              () => (row.enabled ? '启用' : '禁用')
             )
-          }
         },
         {
           prop: 'createTime',
           label: '创建日期',
-          width: 180,
-          sortable: true
+          minWidth: 180,
+          sortable: true,
+          formatter: (row) => formatDateTime(row.createTime)
         },
         {
           prop: 'operation',
@@ -161,6 +159,11 @@
                     key: 'permission',
                     label: '菜单权限',
                     icon: 'ri:user-3-line'
+                  },
+                  {
+                    key: 'resource',
+                    label: '资源权限',
+                    icon: 'ri:database-2-line'
                   },
                   {
                     key: 'edit',
@@ -190,16 +193,13 @@
     currentRoleData.value = row
   }
 
-  /**
-   * 搜索处理
-   * @param params 搜索参数
-   */
-  const handleSearch = (params: RoleSearchFormParams) => {
-    // 处理日期区间参数，把 daterange 转换为 startTime 和 endTime
-    const { daterange, ...filtersParams } = params
-    const [startTime, endTime] = Array.isArray(daterange) ? daterange : [null, null]
+  const handleSearch = (params: Api.SystemManage.RoleSearchParams) => {
+    replaceSearchParams(params)
+    getData()
+  }
 
-    replaceSearchParams({ ...filtersParams, startTime, endTime })
+  const handleResetSearch = () => {
+    resetSearchParams()
     getData()
   }
 
@@ -207,6 +207,9 @@
     switch (item.key) {
       case 'permission':
         showPermissionDialog(row)
+        break
+      case 'resource':
+        showResourceDialog(row)
         break
       case 'edit':
         showDialog('edit', row)
@@ -222,19 +225,34 @@
     currentRoleData.value = row
   }
 
-  const deleteRole = (row: RoleListItem) => {
-    ElMessageBox.confirm(`确定删除角色"${row.roleName}"吗？此操作不可恢复！`, '删除确认', {
+  const showResourceDialog = (row?: RoleListItem) => {
+    resourceDialog.value = true
+    currentRoleData.value = row
+  }
+
+  const toggleRoleStatus = async (row: RoleListItem) => {
+    const nextStatus = row.enabled ? 0 : 1
+    const confirmText = nextStatus === 1 ? '确认启用该角色？' : '确认禁用该角色？'
+
+    await ElMessageBox.confirm(confirmText, '角色状态', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
-      .then(() => {
-        // TODO: 调用删除接口
-        ElMessage.success('删除成功')
-        refreshData()
-      })
-      .catch(() => {
-        ElMessage.info('已取消删除')
-      })
+
+    await fetchUpdateRoleStatus(row.id ?? row.roleId, nextStatus)
+    row.enabled = nextStatus === 1
+    row.status = nextStatus
+  }
+
+  const deleteRole = async (row: RoleListItem) => {
+    await ElMessageBox.confirm(`确定删除角色"${row.roleName}"吗？此操作不可恢复！`, '删除确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+
+    await fetchDeleteRole(row.id ?? row.roleId)
+    refreshData()
   }
 </script>
