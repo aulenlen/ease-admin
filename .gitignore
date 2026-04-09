@@ -9,6 +9,7 @@ dist-ssr
 node_modules/
 dist/
 AGENTS.md
+.codex
 
 # Auto-generated files
 src/types/import/auto-imports.d.ts

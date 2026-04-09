@@ -71,7 +71,7 @@ declare namespace Api {
     /** 登录响应 */
     interface LoginResponse {
       token: string
-      refreshToken: string
+      refreshToken?: string
     }
 
     /** 用户信息 */
