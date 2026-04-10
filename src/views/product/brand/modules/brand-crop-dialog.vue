@@ -77,6 +77,7 @@
 
 <script setup lang="ts">
   import ArtCutterImg from '@/components/core/media/art-cutter-img/index.vue'
+  import { useWindowSize } from '@vueuse/core'
 
   interface Props {
     modelValue: boolean
@@ -108,6 +109,7 @@
   })
 
   const emit = defineEmits<Emits>()
+  const { width } = useWindowSize()
 
   const visible = computed({
     get: () => props.modelValue,
@@ -124,12 +126,32 @@
     height: 220
   })
 
-  const cutterConfig = {
-    boxWidth: 520,
-    boxHeight: 420,
-    cutWidth: 260,
-    cutHeight: 260
-  }
+  const cutterConfig = computed(() => {
+    if (width.value <= 640) {
+      return {
+        boxWidth: Math.max(width.value - 72, 260),
+        boxHeight: 300,
+        cutWidth: 180,
+        cutHeight: 180
+      }
+    }
+
+    if (width.value <= 1024) {
+      return {
+        boxWidth: Math.min(width.value - 120, 460),
+        boxHeight: 360,
+        cutWidth: 220,
+        cutHeight: 220
+      }
+    }
+
+    return {
+      boxWidth: 520,
+      boxHeight: 420,
+      cutWidth: 260,
+      cutHeight: 260
+    }
+  })
 
   const ratioOptions = computed(() => {
     if (props.previewMode === 'wide') {
@@ -184,8 +206,8 @@
 
   const dialogWidth = computed(() => {
     const previewWidth = previewSrc.value ? previewSize.width : previewFallback.value.width
-    const contentWidth = cutterConfig.boxWidth + previewWidth + 92
-    return `${Math.min(Math.max(contentWidth, 720), 860)}px`
+    const contentWidth = cutterConfig.value.boxWidth + previewWidth + 92
+    return `${Math.min(Math.max(contentWidth, 320), width.value - 24)}px`
   })
 
   function applyPreviewSize(url: string) {
@@ -328,6 +350,11 @@
     .brand-crop-dialog__toolbar {
       flex-direction: column;
       align-items: flex-start;
+    }
+
+    .brand-crop-dialog__select {
+      width: 100%;
+      max-width: 180px;
     }
   }
 </style>

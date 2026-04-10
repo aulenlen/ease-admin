@@ -48,8 +48,7 @@
         v-model.trim="value"
         :placeholder="inputPlaceholder"
         clearable
-        class="mt-3"
-        :style="{ width: previewStyle.width }"
+        class="brand-image-field__manual-input mt-3"
       />
     </div>
 
@@ -69,6 +68,7 @@
   import BrandCropDialog from './brand-crop-dialog.vue'
   import { Plus } from '@element-plus/icons-vue'
   import { ElMessage } from 'element-plus'
+  import { useWindowSize } from '@vueuse/core'
 
   interface Props {
     modelValue?: string
@@ -101,6 +101,7 @@
   const uploading = ref(false)
   const showManualInput = ref(false)
   const cropDialogVisible = ref(false)
+  const { width } = useWindowSize()
 
   const value = computed({
     get: () => props.modelValue || '',
@@ -108,8 +109,9 @@
   })
 
   const previewStyle = computed(() => ({
-    width: '160px',
-    height: '160px'
+    width: width.value <= 640 ? '100%' : props.previewMode === 'wide' ? '240px' : '160px',
+    maxWidth: props.previewMode === 'wide' ? '240px' : '160px',
+    height: props.previewMode === 'wide' ? '135px' : '160px'
   }))
 
   const toggleManualInput = () => {
@@ -167,6 +169,7 @@
 
   .brand-image-field__actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     align-items: center;
     margin-top: 8px;
@@ -188,5 +191,15 @@
   .brand-image-field__action:disabled {
     cursor: not-allowed;
     opacity: 0.6;
+  }
+
+  .brand-image-field__manual-input {
+    width: 100%;
+  }
+
+  @media (width <= 640px) {
+    .brand-image-field__actions {
+      gap: 8px;
+    }
   }
 </style>

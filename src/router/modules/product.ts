@@ -10,6 +10,16 @@ export const productRoutes: AppRouteRecord = {
   },
   children: [
     {
+      path: 'category',
+      name: 'ProductCategory',
+      component: '/product/category/index',
+      meta: {
+        title: 'menus.product.category',
+        icon: 'ri:folder-2-line',
+        keepAlive: true
+      }
+    },
+    {
       path: 'brand',
       name: 'ProductBrand',
       component: '/product/brand/index',

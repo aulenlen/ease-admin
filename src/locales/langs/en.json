@@ -262,6 +262,7 @@
     },
     "product": {
       "title": "Product",
+      "category": "Category",
       "brand": "Brand",
       "brandCreate": "Create Brand",
       "brandEdit": "Edit Brand"

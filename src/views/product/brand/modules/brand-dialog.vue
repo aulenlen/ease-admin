@@ -370,6 +370,7 @@
     flex: 1;
     padding: 20px 24px 96px;
     overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .brand-editor__section + .brand-editor__section {

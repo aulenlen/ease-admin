@@ -85,6 +85,16 @@ export interface BrandPageResponse extends Api.Common.PaginatedResponse<BrandLis
   totalPage?: number
 }
 
+interface BrandRelationListRespVO {
+  list?: BrandRespVO[]
+  records?: BrandRespVO[]
+}
+
+export interface BrandRelationBatchUnbindPayload {
+  categoryId: number
+  brandIds: number[]
+}
+
 function buildStatusQuery(
   ids: number | number[],
   field: 'showStatus' | 'factoryStatus',
@@ -130,6 +140,10 @@ function toBrandPageResponse(response: PageBrandListRespVO): BrandPageResponse {
     total: response.total || 0,
     totalPage: response.totalPage
   }
+}
+
+function toBrandList(items?: BrandRespVO[]) {
+  return (items || []).map(toBrandListItem)
 }
 
 function toBrandQueryParams(params: BrandQueryParams) {
@@ -214,6 +228,62 @@ export function updateFactoryStatus(ids: number | number[], factoryStatus: Brand
   return request.request<number>({
     url: buildStatusQuery(ids, 'factoryStatus', factoryStatus),
     method: 'PUT',
+    showSuccessMessage: true
+  })
+}
+
+export function fetchBrandsByCategoryId(categoryId: number) {
+  return request
+    .get<BrandRespVO[] | BrandRelationListRespVO>({
+      url: `${BRAND_BASE_PATH}/categories/${categoryId}`
+    })
+    .then((response) => {
+      const list = Array.isArray(response) ? response : response.records || response.list || []
+      return toBrandList(list)
+    })
+}
+
+export function fetchUnboundBrandsByCategoryId(categoryId: number) {
+  return request
+    .get<BrandRespVO[] | BrandRelationListRespVO>({
+      url: `${BRAND_BASE_PATH}/categories/${categoryId}/unbound`
+    })
+    .then((response) => {
+      const list = Array.isArray(response) ? response : response.records || response.list || []
+      return toBrandList(list)
+    })
+}
+
+export function bindCategoryBrandsBatch(categoryId: number, brandIds: number[]) {
+  return request.post<number>({
+    url: `${BRAND_BASE_PATH}/category-relations/batch/${categoryId}`,
+    data: brandIds
+  })
+}
+
+export function unbindCategoryBrand(categoryId: number, brandId: number) {
+  return request.del<number>({
+    url: `${BRAND_BASE_PATH}/category-relations`,
+    params: { categoryId, brandId }
+  })
+}
+
+export function unbindCategoryBrandsBatch(
+  payload: BrandRelationBatchUnbindPayload
+): Promise<number> {
+  return request.del<number>({
+    url: `${BRAND_BASE_PATH}/category-relations/batch`,
+    data: payload
+  })
+}
+
+export function copyCategoryBrandsFromParent(
+  parentCategoryId: number,
+  childCategoryId: number
+): Promise<number> {
+  return request.post<number>({
+    url: `${BRAND_BASE_PATH}/copy-from-parent`,
+    params: { parentCategoryId, childCategoryId },
     showSuccessMessage: true
   })
 }
