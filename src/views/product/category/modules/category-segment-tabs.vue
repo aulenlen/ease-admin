@@ -1,5 +1,5 @@
 <template>
-  <div class="category-segment-tabs">
+  <div class="flex flex-wrap items-center gap-5 border-b border-[var(--el-border-color-lighter)]">
     <button
       v-for="item in options"
       :key="String(item.value)"
@@ -39,21 +39,13 @@
 </script>
 
 <style scoped lang="scss">
-  .category-segment-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 20px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-  }
-
   .category-segment-tabs__item {
     position: relative;
     padding: 10px 0;
-    border: none;
-    background: transparent;
     color: var(--el-text-color-secondary);
     cursor: pointer;
+    background: transparent;
+    border: none;
   }
 
   .category-segment-tabs__item.is-active {
@@ -61,12 +53,12 @@
   }
 
   .category-segment-tabs__item.is-active::after {
-    content: '';
     position: absolute;
     right: 0;
     bottom: -1px;
     left: 0;
     height: 2px;
+    content: '';
     background: var(--el-color-primary);
     border-radius: 999px;
   }

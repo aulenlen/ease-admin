@@ -35,7 +35,11 @@
         </div>
       </div>
 
-      <ElDescriptions :column="summaryColumns" size="small" class="category-workbench__summary mt-4">
+      <ElDescriptions
+        :column="summaryColumns"
+        size="small"
+        class="mt-4 category-workbench__summary"
+      >
         <ElDescriptionsItem label="上级分类">
           {{ category.parentName || category.parentId || '一级分类' }}
         </ElDescriptionsItem>
@@ -257,9 +261,14 @@
             </div>
           </div>
 
-          <ElForm label-position="top" class="category-workbench__relation-form">
+          <ElForm
+            label-position="top"
+            class="grid grid-cols-1 gap-3 category-workbench__relation-form"
+          >
             <ElFormItem label="分组">
-              <div class="rounded-[var(--el-border-radius-base)] border border-[var(--el-border-color)] px-3 py-2 text-sm text-[var(--el-text-color-primary)]">
+              <div
+                class="rounded-[var(--el-border-radius-base)] border border-[var(--el-border-color)] px-3 py-2 text-sm text-[var(--el-text-color-primary)]"
+              >
                 {{ relationDraft.groupName || '默认分组' }}
               </div>
             </ElFormItem>
@@ -294,9 +303,7 @@
       </template>
 
       <template #footer>
-        <div
-          class="category-workbench__drawer-footer flex w-full flex-col gap-3 md:flex-row md:items-center md:justify-between"
-        >
+        <div class="flex w-full flex-col gap-3 pr-1 md:flex-row md:items-center md:justify-between">
           <div class="flex flex-wrap items-center gap-2">
             <ElButton
               v-if="relationDraft && relationAttr"
@@ -444,9 +451,7 @@
       </div>
 
       <template #footer>
-        <div
-          class="category-workbench__drawer-footer flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-        >
+        <div class="flex w-full flex-col gap-3 pr-1 sm:flex-row sm:items-center sm:justify-between">
           <div class="text-sm text-[var(--el-text-color-secondary)] sm:order-1">
             已选 {{ selectedBindRows.length }} 项
           </div>
@@ -538,9 +543,7 @@
       </div>
 
       <template #footer>
-        <div
-          class="category-workbench__drawer-footer flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-        >
+        <div class="flex w-full flex-col gap-3 pr-1 sm:flex-row sm:items-center sm:justify-between">
           <div class="text-sm text-[var(--el-text-color-secondary)] sm:order-1">
             已选 {{ selectedBrandBindRows.length }} 项
           </div>
@@ -1774,13 +1777,8 @@
     }
   }
 
-  .category-workbench__drawer-footer {
-    padding-right: 4px;
-  }
-
   :deep(.el-drawer__body) {
     padding-right: 10px;
     overflow: auto;
   }
-
 </style>

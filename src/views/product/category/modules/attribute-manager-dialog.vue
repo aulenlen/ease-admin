@@ -149,7 +149,7 @@
       </ElForm>
 
       <template #footer>
-        <div class="attribute-manager-dialog__footer flex items-center justify-end gap-2">
+        <div class="flex items-center justify-end gap-2 pr-1">
           <ElButton @click="editorVisible = false">取消</ElButton>
           <ElButton type="primary" :loading="editorSubmitting" @click="handleEditorSubmit">
             保存
@@ -353,7 +353,8 @@
   async function handleEditorSubmit() {
     if (!String(editorForm.name || '').trim()) return
 
-    const optionList = Number(editorForm.entryMethod) === 1 ? parseOptionText(editorOptionsText.value) : []
+    const optionList =
+      Number(editorForm.entryMethod) === 1 ? parseOptionText(editorOptionsText.value) : []
     if (Number(editorForm.entryMethod) === 1 && optionList.length === 0) return
 
     editorSubmitting.value = true
@@ -393,10 +394,10 @@
 
 <style scoped lang="scss">
   :deep(.attribute-manager-dialog) {
-    margin-bottom: 4vh;
-    max-height: calc(100vh - 8vh);
     display: flex;
     flex-direction: column;
+    max-height: calc(100vh - 8vh);
+    margin-bottom: 4vh;
   }
 
   :deep(.attribute-manager-dialog .el-dialog__body) {
@@ -412,9 +413,4 @@
       margin-bottom: 0;
     }
   }
-
-  .attribute-manager-dialog__footer {
-    padding-right: 4px;
-  }
-
 </style>

@@ -1,5 +1,7 @@
 <template>
-  <div class="spu-status-tabs">
+  <div
+    class="flex flex-wrap items-center gap-4 border-b border-[var(--el-border-color-lighter)] pb-0.5 max-md:gap-3"
+  >
     <button
       v-for="item in items"
       :key="item.key"
@@ -16,35 +18,27 @@
 
 <script setup lang="ts">
   export type SpuStatusTabKey = 'all' | 'publish' | 'unpublish' | 'verify' | 'staged'
+  export type SharedStatusTabKey = string | number
 
   interface TabItem {
-    key: SpuStatusTabKey
+    key: SharedStatusTabKey
     label: string
     count: number | string
   }
 
   interface Props {
-    modelValue: SpuStatusTabKey
+    modelValue: SharedStatusTabKey
     items: TabItem[]
   }
 
   defineProps<Props>()
 
   defineEmits<{
-    (e: 'update:modelValue', value: SpuStatusTabKey): void
+    (e: 'update:modelValue', value: SharedStatusTabKey): void
   }>()
 </script>
 
 <style scoped lang="scss">
-  .spu-status-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    align-items: center;
-    padding-bottom: 2px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-  }
-
   .spu-status-tabs__item {
     position: relative;
     display: inline-flex;
@@ -101,15 +95,5 @@
   .spu-status-tabs__item.is-active .spu-status-tabs__count {
     color: var(--el-color-primary);
     background: rgb(236 243 255 / 100%);
-  }
-
-  @media (width <= 768px) {
-    .spu-status-tabs {
-      gap: 14px;
-    }
-
-    .spu-status-tabs__item {
-      font-size: 12px;
-    }
   }
 </style>

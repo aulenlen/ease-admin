@@ -7,11 +7,17 @@
     modal-class="brand-editor-modal"
     @closed="handleDrawerClosed"
   >
-    <div class="brand-editor">
-      <header class="brand-editor__header">
-        <div class="brand-editor__header-main">
-          <p class="brand-editor__eyebrow">商品管理 / 品牌</p>
-          <h2 class="brand-editor__title">{{ isEdit ? '编辑品牌' : '新增品牌' }}</h2>
+    <div class="flex h-full flex-col bg-[var(--default-box-color)]">
+      <header
+        class="flex items-start justify-between gap-4 border-b border-[color-mix(in_srgb,var(--art-card-border)_60%,transparent)] bg-[var(--default-box-color)] px-6 py-5 max-md:flex-col max-md:px-4"
+      >
+        <div class="min-w-0">
+          <p class="m-0 text-xs text-[var(--el-text-color-secondary)]">商品管理 / 品牌</p>
+          <h2
+            class="mt-1 text-[20px] font-semibold leading-tight text-[var(--el-text-color-primary)]"
+          >
+            {{ isEdit ? '编辑品牌' : '新增品牌' }}
+          </h2>
         </div>
 
         <ElButton circle plain aria-label="关闭品牌编辑抽屉" @click="handleClose">
@@ -19,15 +25,21 @@
         </ElButton>
       </header>
 
-      <div v-loading="loading" class="brand-editor__body">
+      <div
+        v-loading="loading"
+        class="flex-1 overflow-x-hidden overflow-y-auto px-6 py-5 pb-24 max-md:px-4"
+      >
         <ElForm ref="formRef" :model="formData" :rules="rules" label-position="top">
-          <section class="brand-editor__section">
-            <div class="brand-editor__section-head">
-              <h3 class="brand-editor__section-title">基础信息</h3>
+          <section>
+            <div class="mb-3">
+              <h3
+                class="m-0 text-[15px] font-semibold leading-tight text-[var(--el-text-color-primary)]"
+                >基础信息</h3
+              >
             </div>
 
-            <div class="brand-editor__grid">
-              <ElFormItem label="品牌名称" prop="name" class="brand-editor__field">
+            <div class="grid grid-cols-1 gap-4">
+              <ElFormItem label="品牌名称" prop="name" class="mb-0">
                 <ElInput
                   v-model.trim="formData.name"
                   maxlength="64"
@@ -36,7 +48,7 @@
                 />
               </ElFormItem>
 
-              <ElFormItem label="首字母" prop="firstLetter" class="brand-editor__field">
+              <ElFormItem label="首字母" prop="firstLetter" class="mb-0">
                 <ElInput
                   v-model.trim="formData.firstLetter"
                   maxlength="1"
@@ -45,7 +57,7 @@
                 />
               </ElFormItem>
 
-              <ElFormItem label="排序" prop="sort" class="brand-editor__field">
+              <ElFormItem label="排序" prop="sort" class="mb-0">
                 <ElInputNumber
                   v-model="formData.sort"
                   :min="0"
@@ -56,15 +68,15 @@
               </ElFormItem>
             </div>
 
-            <div class="brand-editor__status-grid">
-              <ElFormItem label="显示状态" class="brand-editor__field">
+            <div class="mt-4 grid grid-cols-2 gap-4 max-md:grid-cols-1">
+              <ElFormItem label="显示状态" class="mb-0">
                 <ElRadioGroup v-model="formData.showStatus" size="small">
                   <ElRadioButton :value="1">显示</ElRadioButton>
                   <ElRadioButton :value="0">隐藏</ElRadioButton>
                 </ElRadioGroup>
               </ElFormItem>
 
-              <ElFormItem label="制造商品牌" class="brand-editor__field">
+              <ElFormItem label="制造商品牌" class="mb-0">
                 <ElRadioGroup v-model="formData.factoryStatus" size="small">
                   <ElRadioButton :value="1">是</ElRadioButton>
                   <ElRadioButton :value="0">否</ElRadioButton>
@@ -73,13 +85,18 @@
             </div>
           </section>
 
-          <section class="brand-editor__section">
-            <div class="brand-editor__section-head">
-              <h3 class="brand-editor__section-title">品牌素材</h3>
+          <section
+            class="mt-7 border-t border-[color-mix(in_srgb,var(--art-card-border)_55%,transparent)] pt-6"
+          >
+            <div class="mb-3">
+              <h3
+                class="m-0 text-[15px] font-semibold leading-tight text-[var(--el-text-color-primary)]"
+                >品牌素材</h3
+              >
             </div>
 
-            <div class="brand-editor__media-grid">
-              <ElFormItem prop="logo" class="brand-editor__media-item">
+            <div class="grid grid-cols-1 gap-6">
+              <ElFormItem prop="logo" class="mb-0 min-w-0">
                 <BrandImageField
                   v-model="formData.logo"
                   title="品牌 Logo"
@@ -89,7 +106,7 @@
                 />
               </ElFormItem>
 
-              <div class="brand-editor__media-item">
+              <div class="min-w-0">
                 <BrandImageField
                   v-model="formData.bigPic"
                   title="品牌专区大图"
@@ -101,12 +118,17 @@
             </div>
           </section>
 
-          <section class="brand-editor__section">
-            <div class="brand-editor__section-head">
-              <h3 class="brand-editor__section-title">品牌故事</h3>
+          <section
+            class="mt-7 border-t border-[color-mix(in_srgb,var(--art-card-border)_55%,transparent)] pt-6"
+          >
+            <div class="mb-3">
+              <h3
+                class="m-0 text-[15px] font-semibold leading-tight text-[var(--el-text-color-primary)]"
+                >品牌故事</h3
+              >
             </div>
 
-            <ElFormItem class="brand-editor__story-item">
+            <ElFormItem class="mb-0">
               <ElInput
                 v-model.trim="formData.brandStory"
                 type="textarea"
@@ -120,8 +142,10 @@
         </ElForm>
       </div>
 
-      <footer class="brand-editor__footer">
-        <div class="brand-editor__footer-actions">
+      <footer
+        class="sticky bottom-0 flex justify-end border-t border-[color-mix(in_srgb,var(--art-card-border)_60%,transparent)] bg-[color-mix(in_srgb,var(--default-box-color)_96%,white)] px-6 py-3.5 max-md:px-4"
+      >
+        <div class="flex gap-2.5">
           <ElButton @click="handleClose">取消</ElButton>
           <ElButton @click="handleReset">重置</ElButton>
           <ElButton type="primary" :loading="submitLoading" @click="handleSubmit">
@@ -329,135 +353,5 @@
 <style scoped lang="scss">
   :deep(.el-drawer__body) {
     padding: 0;
-  }
-
-  .brand-editor {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background: var(--default-box-color);
-  }
-
-  .brand-editor__header {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 20px 24px 16px;
-    background: var(--default-box-color);
-    border-bottom: 1px solid color-mix(in srgb, var(--art-card-border) 60%, transparent);
-  }
-
-  .brand-editor__header-main {
-    min-width: 0;
-  }
-
-  .brand-editor__eyebrow {
-    margin: 0;
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-  }
-
-  .brand-editor__title {
-    margin: 4px 0 0;
-    font-size: 20px;
-    font-weight: 600;
-    line-height: 1.25;
-    color: var(--el-text-color-primary);
-  }
-
-  .brand-editor__body {
-    flex: 1;
-    padding: 20px 24px 96px;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .brand-editor__section + .brand-editor__section {
-    padding-top: 24px;
-    margin-top: 28px;
-    border-top: 1px solid color-mix(in srgb, var(--art-card-border) 55%, transparent);
-  }
-
-  .brand-editor__section-head {
-    margin-bottom: 12px;
-  }
-
-  .brand-editor__section-title {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.3;
-    color: var(--el-text-color-primary);
-  }
-
-  .brand-editor__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .brand-editor__status-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-    margin-top: 16px;
-  }
-
-  .brand-editor__field {
-    margin-bottom: 0;
-  }
-
-  .brand-editor__media-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-  .brand-editor__media-item {
-    min-width: 0;
-    margin-bottom: 0;
-  }
-
-  .brand-editor__media-item :deep(.el-form-item__content) {
-    display: block;
-  }
-
-  .brand-editor__story-item {
-    margin-bottom: 0;
-  }
-
-  .brand-editor__footer {
-    position: sticky;
-    bottom: 0;
-    display: flex;
-    justify-content: flex-end;
-    padding: 14px 24px;
-    background: color-mix(in srgb, var(--default-box-color) 96%, white);
-    border-top: 1px solid color-mix(in srgb, var(--art-card-border) 60%, transparent);
-  }
-
-  .brand-editor__footer-actions {
-    display: flex;
-    gap: 10px;
-  }
-
-  @media (width <= 767px) {
-    .brand-editor__header,
-    .brand-editor__body,
-    .brand-editor__footer {
-      padding-right: 16px;
-      padding-left: 16px;
-    }
-
-    .brand-editor__header {
-      flex-direction: column;
-    }
-
-    .brand-editor__grid,
-    .brand-editor__media-grid,
-    .brand-editor__status-grid {
-      grid-template-columns: 1fr;
-    }
   }
 </style>

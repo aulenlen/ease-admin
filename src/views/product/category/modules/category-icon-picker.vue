@@ -26,12 +26,12 @@
             <CategorySegmentTabs v-model="activeGroupKey" :options="groupOptions" />
 
             <ElScrollbar max-height="320px">
-              <div class="category-icon-picker__grid">
+              <div class="grid grid-cols-5 gap-2 max-md:grid-cols-4">
                 <button
                   v-for="icon in visibleIcons"
                   :key="icon"
                   type="button"
-                  class="category-icon-picker__item"
+                  class="flex h-[72px] items-center justify-center gap-1 rounded-[var(--el-border-radius-base)] border border-[var(--el-border-color-lighter)] bg-transparent px-2 text-center transition-[border-color,background-color] duration-200 hover:border-[var(--el-color-primary-light-5)] hover:bg-[var(--el-fill-color-light)]"
                   @click="selectIcon(icon)"
                 >
                   <ArtSvgIcon :icon="icon" class="text-lg" />
@@ -170,38 +170,3 @@
     }
   })
 </script>
-
-<style scoped lang="scss">
-  .category-icon-picker__grid {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .category-icon-picker__item {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    justify-content: center;
-    height: 72px;
-    padding: 0 8px;
-    text-align: center;
-    background: transparent;
-    border: 1px solid var(--el-border-color-lighter);
-    border-radius: var(--el-border-radius-base);
-    transition:
-      border-color 0.2s ease,
-      background-color 0.2s ease;
-  }
-
-  .category-icon-picker__item:hover {
-    background: var(--el-fill-color-light);
-    border-color: var(--el-color-primary-light-5);
-  }
-
-  @media (width <= 767px) {
-    .category-icon-picker__grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-</style>

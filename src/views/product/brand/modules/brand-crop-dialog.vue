@@ -8,10 +8,10 @@
     class="brand-crop-dialog"
     @closed="handleClosed"
   >
-    <div class="brand-crop-dialog__toolbar">
-      <div class="brand-crop-dialog__ratio-group">
-        <span class="brand-crop-dialog__label">比例</span>
-        <ElSelect v-model="selectedRatio" size="small" class="brand-crop-dialog__select">
+    <div class="mb-3 flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-[13px] text-[var(--el-text-color-secondary)]">比例</span>
+        <ElSelect v-model="selectedRatio" size="small" class="w-[120px]">
           <ElOption
             v-for="option in ratioOptions"
             :key="option.value"
@@ -21,26 +21,28 @@
         </ElSelect>
       </div>
 
-      <div v-if="selectedRatio === 'custom'" class="brand-crop-dialog__ratio-inputs">
+      <div v-if="selectedRatio === 'custom'" class="flex items-center gap-2">
         <ElInputNumber
           v-model="customRatioWidth"
           :min="1"
           :max="99"
           size="small"
           controls-position="right"
+          class="w-[92px]"
         />
-        <span class="brand-crop-dialog__ratio-divider">:</span>
+        <span class="text-[13px] text-[var(--el-text-color-secondary)]">:</span>
         <ElInputNumber
           v-model="customRatioHeight"
           :min="1"
           :max="99"
           size="small"
           controls-position="right"
+          class="w-[92px]"
         />
       </div>
     </div>
 
-    <div class="brand-crop-dialog__content">
+    <div class="grid items-start gap-4 lg:grid-cols-[max-content_max-content] grid-cols-1">
       <ArtCutterImg
         :key="cutterKey"
         :box-width="cutterConfig.boxWidth"
@@ -59,16 +61,20 @@
         @error="handleError"
       />
 
-      <div class="brand-crop-dialog__preview" v-if="previewSrc">
-        <div class="brand-crop-dialog__preview-title">裁剪预览</div>
+      <div v-if="previewSrc" class="min-w-0">
+        <div class="pb-2.5 text-base font-medium">裁剪预览</div>
         <div
-          class="brand-crop-dialog__preview-box"
+          class="overflow-hidden"
           :style="{
             width: `${previewSize.width}px`,
             height: `${previewSize.height}px`
           }"
         >
-          <img class="brand-crop-dialog__preview-image" :src="previewSrc" alt="裁剪预览" />
+          <img
+            class="block h-full w-full object-contain object-left-top"
+            :src="previewSrc"
+            alt="裁剪预览"
+          />
         </div>
       </div>
     </div>
@@ -272,65 +278,6 @@
 </script>
 
 <style scoped lang="scss">
-  .brand-crop-dialog__toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-    justify-content: flex-start;
-    margin-bottom: 12px;
-  }
-
-  .brand-crop-dialog__ratio-group,
-  .brand-crop-dialog__ratio-inputs {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .brand-crop-dialog__label,
-  .brand-crop-dialog__ratio-divider {
-    font-size: 13px;
-    color: var(--el-text-color-secondary);
-  }
-
-  .brand-crop-dialog__select {
-    width: 120px;
-  }
-
-  .brand-crop-dialog__ratio-inputs :deep(.el-input-number) {
-    width: 92px;
-  }
-
-  .brand-crop-dialog__content {
-    display: grid;
-    grid-template-columns: max-content max-content;
-    gap: 16px;
-    align-items: flex-start;
-  }
-
-  .brand-crop-dialog__preview {
-    min-width: 0;
-  }
-
-  .brand-crop-dialog__preview-title {
-    padding-bottom: 10px;
-    font-size: 16px;
-    font-weight: 500;
-  }
-
-  .brand-crop-dialog__preview-box {
-    overflow: hidden;
-  }
-
-  .brand-crop-dialog__preview-image {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    object-position: left top;
-  }
-
   :deep(.brand-crop-dialog .el-dialog__body) {
     padding-top: 12px;
     padding-bottom: 20px;
@@ -338,23 +285,5 @@
 
   :deep(.brand-crop-dialog .el-dialog) {
     max-width: calc(100vw - 32px);
-  }
-
-  @media (width <= 1024px) {
-    .brand-crop-dialog__content {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (width <= 767px) {
-    .brand-crop-dialog__toolbar {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .brand-crop-dialog__select {
-      width: 100%;
-      max-width: 180px;
-    }
   }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="spu-image-uploader">
+  <div>
     <ElUpload
       class="spu-image-uploader__upload"
       :file-list="fileList"
@@ -15,7 +15,7 @@
       <ElIcon><Plus /></ElIcon>
     </ElUpload>
 
-    <div v-if="tip" class="spu-image-uploader__tip mt-2 text-xs text-g-600">{{ tip }}</div>
+    <div v-if="tip" class="mt-2 text-xs leading-6 text-g-600">{{ tip }}</div>
 
     <ElDialog v-model="previewVisible" title="图片预览" width="520px">
       <img :src="previewUrl" alt="preview" class="w-full rounded-md" />
@@ -115,9 +115,5 @@
       background: var(--el-fill-color-blank);
       border-color: var(--el-border-color-light);
     }
-  }
-
-  .spu-image-uploader__tip {
-    line-height: 1.5;
   }
 </style>

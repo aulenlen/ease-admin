@@ -71,6 +71,16 @@ export const productRoutes: AppRouteRecord = {
         isHideTab: true,
         activePath: '/product/spu'
       }
+    },
+    {
+      path: 'inventory',
+      name: 'ProductInventory',
+      component: '/product/inventory/index',
+      meta: {
+        title: '库存管理',
+        icon: 'ri:archive-stack-line',
+        keepAlive: true
+      }
     }
   ]
 }

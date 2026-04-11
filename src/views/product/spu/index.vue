@@ -17,7 +17,7 @@
         @refresh="refreshAll"
       >
         <template #left>
-          <div class="spu-page__toolbar flex flex-col">
+          <div class="flex flex-col gap-3">
             <SpuStatusTabs v-model="activeTab" :items="tabItems" />
 
             <ElSpace wrap>
@@ -212,16 +212,21 @@
           formatter: (row) => {
             const displayStatus = getSpuDisplayStatus(row)
 
-            return h('div', { class: 'spu-page__status-cell' }, [
+            return h('div', { class: 'flex flex-wrap items-center gap-x-2 gap-y-1' }, [
               h(
                 ElTag,
                 {
-                  type: displayStatus.type
+                  type: displayStatus.type,
+                  class: 'm-0 rounded-full !px-2 text-xs font-medium'
                 },
                 () => displayStatus.text
               ),
               Number(row.recommendStatus ?? 0) === 1
-                ? h(ElTag, { type: 'danger' }, () => '推荐')
+                ? h(
+                    ElTag,
+                    { type: 'danger', class: 'm-0 rounded-full !px-2 text-xs font-medium' },
+                    () => '推荐'
+                  )
                 : null
             ])
           }
@@ -269,7 +274,7 @@
               }
             ]
 
-            return h('div', { class: 'spu-page__actions flex items-center' }, [
+            return h('div', { class: 'flex items-center gap-2 max-md:gap-1.5' }, [
               h(ArtButtonTable, {
                 type: 'view',
                 onClick: () => router.push(`/product/spu/detail/${row.id}`)
@@ -432,42 +437,3 @@
     await refreshAll()
   })
 </script>
-
-<style scoped lang="scss">
-  .spu-page__toolbar {
-    gap: 12px;
-  }
-
-  .spu-page__status-cell {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 8px;
-    align-items: center;
-  }
-
-  .spu-page__status-cell :deep(.el-tag) {
-    padding: 0 8px;
-    margin-right: 8px;
-    font-size: 12px;
-    font-weight: 500;
-    border-radius: 999px;
-  }
-
-  .spu-page__status-cell :deep(.el-tag:last-child) {
-    margin-right: 0;
-  }
-
-  .spu-page__actions {
-    gap: 8px;
-  }
-
-  .spu-page__actions :deep(.inline-flex) {
-    margin-right: 0;
-  }
-
-  @media (width <= 768px) {
-    .spu-page__actions {
-      gap: 6px;
-    }
-  }
-</style>

@@ -1,10 +1,14 @@
 <template>
   <div class="space-y-4" v-loading="loading">
     <ElCard shadow="never" class="art-card-xs spu-view__hero">
-      <div class="spu-view__hero-main">
+      <div class="flex items-center justify-between gap-4 max-md:flex-col max-md:items-start">
         <div>
-          <div class="spu-view__title">{{ detail?.name || '商品详情' }}</div>
-          <div class="spu-view__meta">
+          <div class="text-lg font-semibold text-[var(--el-text-color-primary)]">
+            {{ detail?.name || '商品详情' }}
+          </div>
+          <div
+            class="mt-1.5 flex flex-wrap gap-x-3.5 gap-y-2 text-xs text-[var(--el-text-color-secondary)]"
+          >
             <span>商品编号：{{ detail?.spuCode || '-' }}</span>
             <span>品牌：{{ detail?.brandName || '-' }}</span>
             <span>分类：{{ detail?.categoryName || '-' }}</span>
@@ -12,7 +16,7 @@
           </div>
         </div>
 
-        <div class="spu-view__actions flex gap-3">
+        <div class="flex gap-3">
           <ElButton @click="router.push('/product/spu')">返回列表</ElButton>
           <ElButton type="primary" @click="goEdit">编辑商品</ElButton>
         </div>
@@ -112,7 +116,7 @@
               v-if="detail?.pic"
               :src="detail.pic"
               fit="cover"
-              class="spu-view__main-image h-48 w-full rounded-lg"
+              class="h-48 w-full rounded-lg bg-[var(--el-fill-color-light)]"
               :preview-src-list="[detail.pic]"
               preview-teleported
             />
@@ -183,32 +187,6 @@
     }
   }
 
-  .spu-view__hero-main {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .spu-view__title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-
-  .spu-view__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 14px;
-    margin-top: 6px;
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-  }
-
-  .spu-view__main-image {
-    background: var(--el-fill-color-light);
-  }
-
   .spu-view__content {
     :deep(img) {
       max-width: 100%;
@@ -216,13 +194,6 @@
 
     :deep(p:first-child) {
       margin-top: 0;
-    }
-  }
-
-  @media (width <= 768px) {
-    .spu-view__hero-main {
-      flex-direction: column;
-      align-items: flex-start;
     }
   }
 </style>

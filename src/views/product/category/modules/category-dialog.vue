@@ -9,7 +9,7 @@
     @closed="handleClosed"
   >
     <div class="flex h-full flex-col">
-      <div v-loading="loading" class="category-editor-drawer__body flex-1 overflow-auto">
+      <div v-loading="loading" class="flex-1 overflow-auto pr-2.5">
         <ElForm
           ref="formRef"
           :model="formData"
@@ -91,7 +91,7 @@
       </div>
 
       <div
-        class="category-editor-drawer__footer mt-3 flex items-center justify-end gap-2 border-t border-[var(--el-border-color-lighter)] pt-3"
+        class="mt-3 flex items-center justify-end gap-2 border-t border-[var(--el-border-color-lighter)] pt-3 pr-1"
       >
         <ElButton @click="visible = false">取消</ElButton>
         <ElButton type="primary" :loading="submitting" @click="handleSubmit">提交</ElButton>
@@ -278,10 +278,6 @@
     overflow: hidden;
   }
 
-  .category-editor-drawer__body {
-    padding-right: 10px;
-  }
-
   .category-editor-form {
     :deep(.el-form-item) {
       margin-bottom: 14px;
@@ -290,9 +286,5 @@
     :deep(.el-form-item:last-child) {
       margin-bottom: 0;
     }
-  }
-
-  .category-editor-drawer__footer {
-    padding-right: 4px;
   }
 </style>

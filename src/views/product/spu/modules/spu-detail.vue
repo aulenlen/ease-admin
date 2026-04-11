@@ -1,17 +1,21 @@
 <template>
-  <div class="spu-detail-page" v-loading="loading">
+  <div class="flex flex-col gap-4" v-loading="loading">
     <ElCard shadow="never" class="art-card-xs spu-detail-page__topbar">
-      <div class="spu-detail-page__topbar-main">
+      <div class="flex items-center justify-between gap-4 max-md:items-start max-md:flex-col">
         <div>
-          <div class="spu-detail-page__title">{{ pageTitle }}</div>
-          <div class="spu-detail-page__meta">
+          <div class="text-lg font-semibold text-[var(--el-text-color-primary)]">{{
+            pageTitle
+          }}</div>
+          <div
+            class="mt-1.5 flex flex-wrap gap-x-3.5 gap-y-2 text-xs text-[var(--el-text-color-secondary)]"
+          >
             <span>{{ isEdit ? `商品ID：${form.id}` : '新建商品' }}</span>
             <span>分类：{{ form.categoryId ? form.categoryId : '未选择' }}</span>
             <span>状态：{{ Number(form.publishStatus ?? 0) === 1 ? '已上架' : '未上架' }}</span>
           </div>
         </div>
 
-        <div class="spu-detail-page__actions flex flex-wrap gap-3">
+        <div class="flex shrink-0 flex-wrap gap-3 max-md:w-full">
           <ElButton @click="router.push('/product/spu')">返回列表</ElButton>
           <ElButton @click="handleReset">重置</ElButton>
           <ElButton type="primary" :loading="saving" @click="handleSubmit">保存商品</ElButton>
@@ -118,7 +122,7 @@
               />
             </ElFormItem>
 
-            <div class="spu-detail-page__switch-row">
+            <div class="flex flex-wrap items-center gap-3">
               <ElTag effect="plain">发布状态</ElTag>
               <ElSwitch
                 :model-value="Number(form.publishStatus ?? 0) === 1"
@@ -133,8 +137,10 @@
 
             <ElDivider />
 
-            <section class="spu-detail-page__section">
-              <div class="spu-detail-page__section-title">商品参数</div>
+            <section class="pt-0.5">
+              <div class="mb-2.5 text-sm font-semibold text-[var(--el-text-color-primary)]"
+                >商品参数</div
+              >
               <ElEmpty v-if="!form.categoryId" description="先选择商品分类，再填写参数" />
               <ElEmpty v-else-if="!paramDefs.length" description="当前分类未配置参数" />
               <ElRow v-else :gutter="16">
@@ -164,15 +170,19 @@
 
             <ElDivider />
 
-            <section class="spu-detail-page__section">
-              <div class="spu-detail-page__section-title">商品详情</div>
+            <section class="pt-0.5">
+              <div class="mb-2.5 text-sm font-semibold text-[var(--el-text-color-primary)]"
+                >商品详情</div
+              >
               <ArtWangEditor v-model="form.detailMobileHtml" height="360px" />
             </section>
           </ElForm>
 
           <div v-show="activeTab === 'sku'" class="space-y-4">
-            <section class="spu-detail-page__section">
-              <div class="spu-detail-page__section-title">规格配置</div>
+            <section class="pt-0.5">
+              <div class="mb-2.5 text-sm font-semibold text-[var(--el-text-color-primary)]"
+                >规格配置</div
+              >
               <ElEmpty v-if="!form.categoryId" description="先选择商品分类，再配置规格" />
               <ElEmpty v-else-if="!specDefs.length" description="当前分类未配置规格" />
               <div v-else class="space-y-4">
@@ -180,7 +190,7 @@
                   v-for="item in specDefs"
                   :key="item.attrId"
                   shadow="never"
-                  class="spu-detail-page__spec-card"
+                  class="border-dashed"
                 >
                   <div class="flex items-center justify-between gap-4">
                     <div class="font-medium">{{ item.attrName }}</div>
@@ -202,8 +212,10 @@
               </div>
             </section>
 
-            <section class="spu-detail-page__section">
-              <div class="spu-detail-page__section-title">SKU 与价格</div>
+            <section class="pt-0.5">
+              <div class="mb-2.5 text-sm font-semibold text-[var(--el-text-color-primary)]"
+                >SKU 与价格</div
+              >
               <ElAlert
                 v-if="hasSpecSelection"
                 type="info"
@@ -276,11 +288,11 @@
           </template>
 
           <div class="space-y-4">
-            <div class="spu-detail-page__aside-block">
+            <div class="pb-0.5">
               <div class="mb-2 text-sm font-medium">商品主图</div>
               <SpuImageUploader v-model="mainPicList" :limit="1" tip="建议上传 1:1 主图" />
             </div>
-            <div class="spu-detail-page__aside-block">
+            <div class="pb-0.5">
               <div class="mb-2 text-sm font-medium">轮播图</div>
               <SpuImageUploader
                 v-model="form.albumPics"
@@ -747,82 +759,13 @@
 </script>
 
 <style scoped lang="scss">
-  .spu-detail-page {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
   .spu-detail-page__topbar {
     :deep(.el-card__body) {
       padding: 14px 18px;
     }
   }
 
-  .spu-detail-page__topbar-main {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .spu-detail-page__title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-
-  .spu-detail-page__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 14px;
-    margin-top: 6px;
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-  }
-
-  .spu-detail-page__actions {
-    flex-shrink: 0;
-  }
-
   .spu-detail-page__tabs :deep(.el-tabs__header) {
     margin-bottom: 0;
-  }
-
-  .spu-detail-page__section {
-    padding-top: 2px;
-  }
-
-  .spu-detail-page__section-title {
-    margin-bottom: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-
-  .spu-detail-page__switch-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .spu-detail-page__spec-card {
-    border-style: dashed;
-  }
-
-  .spu-detail-page__aside-block {
-    padding-bottom: 2px;
-  }
-
-  @media (width <= 768px) {
-    .spu-detail-page__topbar-main {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .spu-detail-page__actions {
-      width: 100%;
-    }
   }
 </style>

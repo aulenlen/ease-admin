@@ -1,12 +1,12 @@
 <template>
-  <article class="brand-image-field">
+  <article>
     <div class="text-sm font-medium text-g-900">{{ title }}</div>
 
     <div class="mt-2.5">
       <button
         v-if="!value"
         type="button"
-        class="brand-image-field__empty flex-cc flex-col border border-dashed border-[#d9d9d9] rounded-md bg-transparent"
+        class="flex-cc flex-col rounded-md border border-dashed border-[#d9d9d9] bg-transparent p-0"
         :style="previewStyle"
         @click="openCropDialog"
       >
@@ -18,7 +18,7 @@
         v-else
         :src="value"
         :alt="title"
-        class="brand-image-field__image"
+        class="block cursor-pointer rounded-md object-cover"
         :style="previewStyle"
         :preview-src-list="[value]"
         preview-teleported
@@ -26,19 +26,28 @@
 
       <div v-if="tip" class="mt-2 text-xs text-g-700">{{ tip }}</div>
 
-      <div class="brand-image-field__actions">
+      <div class="mt-2 flex flex-wrap items-center gap-3 text-xs max-sm:gap-2">
         <button
           type="button"
-          class="brand-image-field__action brand-image-field__action--primary"
+          class="cursor-pointer border-none bg-transparent p-0 text-[var(--theme-color)]"
           :disabled="uploading"
           @click="openCropDialog"
         >
           {{ uploading ? '上传中...' : value ? '重新裁剪' : '裁剪上传' }}
         </button>
-        <button type="button" class="brand-image-field__action" @click="toggleManualInput">
+        <button
+          type="button"
+          class="cursor-pointer border-none bg-transparent p-0 text-[var(--el-text-color-secondary)]"
+          @click="toggleManualInput"
+        >
           {{ showManualInput ? '收起地址' : '使用地址' }}
         </button>
-        <button v-if="value" type="button" class="brand-image-field__action" @click="clearImage">
+        <button
+          v-if="value"
+          type="button"
+          class="cursor-pointer border-none bg-transparent p-0 text-[var(--el-text-color-secondary)]"
+          @click="clearImage"
+        >
           清空
         </button>
       </div>
@@ -48,7 +57,7 @@
         v-model.trim="value"
         :placeholder="inputPlaceholder"
         clearable
-        class="brand-image-field__manual-input mt-3"
+        class="mt-3 w-full"
       />
     </div>
 
@@ -149,57 +158,3 @@
     }
   }
 </script>
-
-<style scoped lang="scss">
-  .brand-image-field {
-    display: block;
-  }
-
-  .brand-image-field__empty {
-    padding: 0;
-    cursor: pointer;
-  }
-
-  .brand-image-field__image {
-    display: block;
-    cursor: pointer;
-    object-fit: cover;
-    border-radius: 6px;
-  }
-
-  .brand-image-field__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-    margin-top: 8px;
-    font-size: 12px;
-  }
-
-  .brand-image-field__action {
-    padding: 0;
-    color: var(--el-text-color-secondary);
-    cursor: pointer;
-    background: transparent;
-    border: none;
-  }
-
-  .brand-image-field__action--primary {
-    color: var(--theme-color);
-  }
-
-  .brand-image-field__action:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  .brand-image-field__manual-input {
-    width: 100%;
-  }
-
-  @media (width <= 640px) {
-    .brand-image-field__actions {
-      gap: 8px;
-    }
-  }
-</style>

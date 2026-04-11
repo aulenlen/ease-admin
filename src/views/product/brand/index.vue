@@ -91,6 +91,58 @@
     factoryStatus: undefined
   })
 
+  const renderBrandLogo = (row: BrandListItem) =>
+    row.logo
+      ? h(ElImage, {
+          src: row.logo,
+          fit: 'cover',
+          class: 'size-10 rounded-lg',
+          previewSrcList: [row.logo],
+          previewTeleported: true
+        })
+      : h('div', { class: 'text-xs text-g-500' }, '暂无图片')
+
+  const renderBrandInfo = (row: BrandListItem) =>
+    h('div', { class: 'flex flex-col gap-1' }, [
+      h('div', { class: 'font-medium text-g-900' }, row.name),
+      h('div', { class: 'text-xs text-g-500' }, `首字母：${row.firstLetter || '-'}`)
+    ])
+
+  const renderBooleanTag = (
+    active: boolean,
+    activeText: string,
+    inactiveText: string,
+    onClick: () => void,
+    inactiveType: 'info' | 'warning'
+  ) =>
+    h(
+      ElTag,
+      {
+        type: active ? 'success' : inactiveType,
+        class: 'cursor-pointer',
+        onClick
+      },
+      () => (active ? activeText : inactiveText)
+    )
+
+  const renderBrandStats = (row: BrandListItem) =>
+    h('div', { class: 'flex flex-col text-xs leading-5 text-g-600' }, [
+      h('div', `商品数：${row.spuCount ?? 0}`),
+      h('div', `评价数：${row.spuCommentCount ?? 0}`)
+    ])
+
+  const renderBrandOperation = (row: BrandListItem) =>
+    h('div', [
+      h(ArtButtonTable, {
+        type: 'edit',
+        onClick: () => showDialog('edit', row)
+      }),
+      h(ArtButtonTable, {
+        type: 'delete',
+        onClick: () => handleDelete(row)
+      })
+    ])
+
   const {
     columns,
     columnChecks,
@@ -124,26 +176,13 @@
           prop: 'logo',
           label: '品牌 Logo',
           width: 120,
-          formatter: (row) =>
-            row.logo
-              ? h(ElImage, {
-                  src: row.logo,
-                  fit: 'cover',
-                  class: 'size-10 rounded-lg',
-                  previewSrcList: [row.logo],
-                  previewTeleported: true
-                })
-              : h('div', { class: 'text-xs text-g-500' }, '暂无图片')
+          formatter: (row) => renderBrandLogo(row)
         },
         {
           prop: 'name',
           label: '品牌信息',
           minWidth: 220,
-          formatter: (row) =>
-            h('div', { class: 'flex flex-col gap-1' }, [
-              h('div', { class: 'font-medium text-g-900' }, row.name),
-              h('div', { class: 'text-xs text-g-500' }, `首字母：${row.firstLetter || '-'}`)
-            ])
+          formatter: (row) => renderBrandInfo(row)
         },
         {
           prop: 'sort',
@@ -156,14 +195,12 @@
           label: '制造商',
           width: 110,
           formatter: (row) =>
-            h(
-              ElTag,
-              {
-                type: Number(row.factoryStatus ?? 0) === 1 ? 'success' : 'info',
-                class: 'cursor-pointer',
-                onClick: () => handleToggleFactoryStatus(row)
-              },
-              () => (Number(row.factoryStatus ?? 0) === 1 ? '是' : '否')
+            renderBooleanTag(
+              Number(row.factoryStatus ?? 0) === 1,
+              '是',
+              '否',
+              () => handleToggleFactoryStatus(row),
+              'info'
             )
         },
         {
@@ -171,25 +208,19 @@
           label: '显示状态',
           width: 110,
           formatter: (row) =>
-            h(
-              ElTag,
-              {
-                type: Number(row.showStatus ?? 0) === 1 ? 'success' : 'warning',
-                class: 'cursor-pointer',
-                onClick: () => handleToggleShowStatus(row)
-              },
-              () => (Number(row.showStatus ?? 0) === 1 ? '显示' : '隐藏')
+            renderBooleanTag(
+              Number(row.showStatus ?? 0) === 1,
+              '显示',
+              '隐藏',
+              () => handleToggleShowStatus(row),
+              'warning'
             )
         },
         {
           prop: 'stats',
           label: '数据统计',
           minWidth: 160,
-          formatter: (row) =>
-            h('div', { class: 'flex flex-col text-xs leading-5 text-g-600' }, [
-              h('div', `商品数：${row.spuCount ?? 0}`),
-              h('div', `评价数：${row.spuCommentCount ?? 0}`)
-            ])
+          formatter: (row) => renderBrandStats(row)
         },
         {
           prop: 'createTime',
@@ -203,17 +234,7 @@
           label: '操作',
           width: 120,
           fixed: 'right',
-          formatter: (row) =>
-            h('div', [
-              h(ArtButtonTable, {
-                type: 'edit',
-                onClick: () => showDialog('edit', row)
-              }),
-              h(ArtButtonTable, {
-                type: 'delete',
-                onClick: () => handleDelete(row)
-              })
-            ])
+          formatter: (row) => renderBrandOperation(row)
         }
       ]
     }

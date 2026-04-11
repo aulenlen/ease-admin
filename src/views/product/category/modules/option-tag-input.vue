@@ -1,6 +1,6 @@
 <template>
-  <div class="option-tag-input">
-    <div v-if="tags.length" class="option-tag-input__tags">
+  <div class="flex min-w-0 w-full flex-col gap-2">
+    <div v-if="tags.length" class="flex min-h-8 w-full flex-wrap content-start items-start gap-2">
       <ElTag
         v-for="option in tags"
         :key="option"
@@ -73,23 +73,3 @@
     commitInput()
   }
 </script>
-
-<style scoped lang="scss">
-  .option-tag-input {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
-    min-width: 0;
-  }
-
-  .option-tag-input__tags {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    align-content: flex-start;
-    gap: 8px;
-    min-height: 32px;
-    width: 100%;
-  }
-</style>

@@ -19,9 +19,14 @@
 
       <ElTableColumn label="SKU 图" width="120">
         <template #default="{ row, $index }">
-          <div class="spu-sku-editor__thumb" @click="pickImage($index)">
+          <div class="cursor-pointer" @click="pickImage($index)">
             <ElImage v-if="row.pic" :src="row.pic" fit="cover" class="size-12 rounded-md" />
-            <div v-else class="spu-sku-editor__thumb-empty">上传</div>
+            <div
+              v-else
+              class="flex size-12 items-center justify-center rounded-lg border border-dashed border-[var(--el-border-color)] text-xs text-[var(--el-text-color-secondary)]"
+            >
+              上传
+            </div>
           </div>
         </template>
       </ElTableColumn>
@@ -133,21 +138,3 @@
     }
   }
 </script>
-
-<style scoped lang="scss">
-  .spu-sku-editor__thumb {
-    cursor: pointer;
-  }
-
-  .spu-sku-editor__thumb-empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-    border: 1px dashed var(--el-border-color);
-    border-radius: 8px;
-  }
-</style>
