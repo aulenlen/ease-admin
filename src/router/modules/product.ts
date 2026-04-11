@@ -28,6 +28,49 @@ export const productRoutes: AppRouteRecord = {
         icon: 'ri:price-tag-2-line',
         keepAlive: true
       }
+    },
+    {
+      path: 'spu',
+      name: 'ProductSpu',
+      component: '/product/spu/index',
+      meta: {
+        title: '商品管理',
+        icon: 'ri:shopping-bag-3-line',
+        keepAlive: true
+      }
+    },
+    {
+      path: 'spu/create',
+      name: 'ProductSpuCreate',
+      component: '/product/spu/add',
+      meta: {
+        title: '新增商品',
+        isHide: true,
+        isHideTab: true,
+        activePath: '/product/spu'
+      }
+    },
+    {
+      path: 'spu/edit/:id',
+      name: 'ProductSpuEdit',
+      component: '/product/spu/update',
+      meta: {
+        title: '编辑商品',
+        isHide: true,
+        isHideTab: true,
+        activePath: '/product/spu'
+      }
+    },
+    {
+      path: 'spu/detail/:id',
+      name: 'ProductSpuDetail',
+      component: '/product/spu/view',
+      meta: {
+        title: '商品详情',
+        isHide: true,
+        isHideTab: true,
+        activePath: '/product/spu'
+      }
     }
   ]
 }

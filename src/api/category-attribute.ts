@@ -23,6 +23,15 @@ export interface CategoryAttributePoolItem {
   optionList: string[]
 }
 
+export interface CategoryAttributeRelationItem extends CategoryAttributePoolItem {
+  relationId?: number
+  attrId: number
+  attrName: string
+  groupName?: string
+  sort?: number
+  required?: CategoryFlag01
+}
+
 export interface CategoryAttributePoolPage {
   records: CategoryAttributePoolItem[]
   current: number
@@ -66,6 +75,17 @@ interface CategoryAttributePoolRespVO {
   filterable?: CategoryFlag01
   options?: string | string[]
   optionList?: string[] | string
+}
+
+interface CategoryAttributeRelationRespVO extends CategoryAttributePoolRespVO {
+  relationId?: number
+  attrId?: number
+  attrName?: string
+  groupName?: string
+  sort?: number
+  required?: CategoryFlag01
+  globalOptions?: string | string[]
+  categoryOptions?: string | string[]
 }
 
 interface CategoryAttributePageRespVO<T> {
@@ -112,6 +132,27 @@ function toCategoryAttributePoolItem(item: CategoryAttributePoolRespVO): Categor
   }
 }
 
+function toCategoryAttributeRelationItem(
+  item: CategoryAttributeRelationRespVO
+): CategoryAttributeRelationItem {
+  const poolItem = toCategoryAttributePoolItem({
+    ...item,
+    id: Number(item.attrId ?? item.id ?? 0),
+    name: item.attrName || item.name || '',
+    optionList: item.optionList ?? item.categoryOptions ?? item.globalOptions
+  })
+
+  return {
+    ...poolItem,
+    relationId: item.relationId,
+    attrId: Number(item.attrId ?? item.id ?? 0),
+    attrName: item.attrName || item.name || '',
+    groupName: item.groupName,
+    sort: Number(item.sort ?? 0),
+    required: Number(item.required ?? 0) === 1 ? 1 : 0
+  }
+}
+
 function buildCategoryAttributeQueryParams(params: CategoryAttributeQueryParams) {
   return {
     pageNum: params.current,
@@ -154,6 +195,22 @@ export function fetchCategoryAttributePool(
         total: Number(data.total || 0)
       }
     })
+}
+
+export function fetchCategoryParams(categoryId: number): Promise<CategoryAttributeRelationItem[]> {
+  return request
+    .get<CategoryAttributeRelationRespVO[]>({
+      url: `${ATTRIBUTE_BASE_PATH}/category-relations/categories/${categoryId}/params`
+    })
+    .then((list) => (list || []).map(toCategoryAttributeRelationItem))
+}
+
+export function fetchCategorySpecs(categoryId: number): Promise<CategoryAttributeRelationItem[]> {
+  return request
+    .get<CategoryAttributeRelationRespVO[]>({
+      url: `${ATTRIBUTE_BASE_PATH}/category-relations/categories/${categoryId}/specs`
+    })
+    .then((list) => (list || []).map(toCategoryAttributeRelationItem))
 }
 
 export function getCategoryAttribute(id: number): Promise<CategoryAttributePoolItem> {
