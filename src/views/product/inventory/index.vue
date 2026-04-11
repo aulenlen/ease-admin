@@ -2,6 +2,7 @@
   <div class="art-full-height inventory-page">
     <div class="space-y-4">
       <InventorySearch
+        v-show="showSearchBar"
         v-model="searchForm"
         :brand-options="filterOptions.brands"
         :category-options="filterOptions.categories"
@@ -18,6 +19,14 @@
         <div class="mb-3">
           <SpuStatusTabs v-model="activeTab" :items="tabItems" />
         </div>
+
+        <ArtTableHeader
+          v-model:columns="columnChecks"
+          v-model:showSearchBar="showSearchBar"
+          class="mb-3"
+          :loading="loading"
+          @refresh="refreshAll"
+        />
 
         <ArtTable
           :loading="loading"
@@ -97,6 +106,7 @@
 
   const router = useRouter()
   const numberFormatter = new Intl.NumberFormat('zh-CN')
+  const showSearchBar = ref(true)
   const activeTab = ref<InventoryTab>('all')
   const expandedRowKeys = ref<string[]>([])
   const filterOptions = ref<InventoryFilterOptions>({
@@ -210,7 +220,7 @@
         style: {
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'flex-start'
         }
       },
       [
@@ -238,7 +248,6 @@
         type: 'button',
         style: {
           ...expandTriggerBaseStyle,
-          margin: '0 auto',
           transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)'
         },
         onClick: async (event: MouseEvent) => {
@@ -269,7 +278,7 @@
   const renderMetaText = (value?: string) => h('span', { style: secondaryTextStyle }, value || '-')
 
   const renderStockSummary = (row: InventorySpuRowState) =>
-    h('div', { class: 'flex flex-col text-center' }, [
+    h('div', { class: 'flex flex-col text-left' }, [
       h('div', formatNumber(row.totalAvailableStock)),
       h('div', { class: 'text-xs text-g-500' }, `锁定 ${formatNumber(row.totalLockStock)}`)
     ])
@@ -291,11 +300,11 @@
       return h('span', { class: 'text-xs text-g-500' }, '暂无异常')
     }
 
-    return h('div', { class: 'flex flex-wrap justify-center gap-2' }, nodes)
+    return h('div', { class: 'flex flex-wrap justify-start gap-2' }, nodes)
   }
 
   const renderOperationCell = (row: InventorySpuRowState) =>
-    h('div', { class: 'flex items-center justify-center gap-2' }, [
+    h('div', { class: 'flex items-center justify-start gap-2' }, [
       h(ArtButtonTable, {
         type: 'add',
         onClick: () => openCreateDialog(row)
@@ -324,6 +333,7 @@
 
   const {
     columns,
+    columnChecks,
     data,
     loading,
     pagination,
@@ -345,68 +355,53 @@
           prop: 'expandTrigger',
           label: '',
           width: 56,
-          align: 'center',
-          headerAlign: 'center',
           formatter: (row: any) => renderSpuExpandTrigger(row as InventorySpuRowState)
         },
         {
           prop: 'spuImage',
           label: '商品图片',
           width: 96,
-          align: 'center',
-          headerAlign: 'center',
           formatter: (row: any) => renderSpuImageCell(row as InventorySpuRowState)
         },
         {
           prop: 'spuInfo',
           label: '商品名称',
           minWidth: 240,
-          headerAlign: 'left',
           formatter: (row: any) => renderSpuNameCell(row as InventorySpuRowState)
         },
         {
           prop: 'brandName',
           label: '品牌',
           minWidth: 140,
-          headerAlign: 'left',
           formatter: (row: any) => renderMetaText(row.brandName)
         },
         {
           prop: 'categoryName',
           label: '分类',
           minWidth: 140,
-          headerAlign: 'left',
           formatter: (row: any) => renderMetaText(row.categoryName)
         },
         {
           prop: 'skuCount',
           label: 'SKU 数',
-          width: 100,
-          align: 'center',
-          headerAlign: 'center'
+          width: 100
         },
         {
           prop: 'totalSale',
           label: '销量',
           width: 110,
-          align: 'center',
-          headerAlign: 'center',
           formatter: (row: any) => formatNumber(row.totalSale)
         },
         {
           prop: 'stock',
           label: '可售 / 锁定',
           width: 150,
-          align: 'center',
-          headerAlign: 'center',
           formatter: (row: any) => renderStockSummary(row as InventorySpuRowState)
         },
         {
           prop: 'issue',
           label: '异常 SKU',
           width: 180,
-          align: 'center',
-          headerAlign: 'center',
           formatter: (row: any) => renderIssueSummary(row as InventorySpuRowState)
         },
         {
@@ -414,8 +409,6 @@
           label: '操作',
           width: 120,
           fixed: 'right',
-          align: 'center',
-          headerAlign: 'center',
           formatter: (row: any) => renderOperationCell(row as InventorySpuRowState)
         },
         {
