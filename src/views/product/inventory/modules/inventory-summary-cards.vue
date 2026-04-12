@@ -51,7 +51,7 @@
     width: 36px;
     height: 36px;
     font-size: 15px;
-    border-radius: 10px;
+    border-radius: calc(var(--shop-control-radius) + 1px);
   }
 
   .inventory-summary-card__icon.is-sky {

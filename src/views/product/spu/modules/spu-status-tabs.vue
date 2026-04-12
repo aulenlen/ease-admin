@@ -94,6 +94,6 @@
 
   .spu-status-tabs__item.is-active .spu-status-tabs__count {
     color: var(--el-color-primary);
-    background: rgb(236 243 255 / 100%);
+    background: var(--art-el-active-color);
   }
 </style>

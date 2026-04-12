@@ -86,6 +86,12 @@
   border: 1px solid var(--art-card-border) !important;
 }
 
+:root {
+  --ease-panel-border: var(--default-border);
+  --ease-panel-shadow: none;
+  --ease-panel-bg: var(--default-box-color);
+}
+
 @mixin art-card-base($border-color, $shadow: none, $radius-diff: 4px) {
   background: var(--default-box-color);
   border: 1px solid #{$border-color} !important;
@@ -103,6 +109,10 @@
 
 // 盒子边框
 [data-box-mode='border-mode'] {
+  --ease-panel-border: var(--default-border);
+  --ease-panel-shadow: none;
+  --ease-panel-bg: var(--default-box-color);
+
   .page-content,
   .art-table-card {
     border: 1px solid var(--art-card-border) !important;
@@ -123,6 +133,10 @@
 
 // 盒子阴影
 [data-box-mode='shadow-mode'] {
+  --ease-panel-border: var(--default-border);
+  --ease-panel-shadow: var(--shop-shadow-xs);
+  --ease-panel-bg: var(--default-box-color);
+
   .page-content,
   .art-table-card {
     box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.04) !important;

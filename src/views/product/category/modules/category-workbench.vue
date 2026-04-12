@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-4">
-    <section class="art-card-xs p-5">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <section class="art-card-xs p-4">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-center gap-2">
             <span class="text-lg font-semibold">{{ category.name }}</span>
@@ -16,7 +16,7 @@
             </ElTag>
           </div>
 
-          <div class="mt-2 text-sm text-[var(--el-text-color-secondary)]">
+          <div class="mt-1.5 text-sm text-[var(--el-text-color-secondary)]">
             <span>ID：{{ category.id }}</span>
             <span class="mx-2">/</span>
             <span>层级：{{ category.level }}</span>
@@ -38,7 +38,7 @@
       <ElDescriptions
         :column="summaryColumns"
         size="small"
-        class="mt-4 category-workbench__summary"
+        class="mt-3 category-workbench__summary"
       >
         <ElDescriptionsItem label="上级分类">
           {{ category.parentName || category.parentId || '一级分类' }}
@@ -91,59 +91,69 @@
 
         <ElTabs v-model="activeTab">
           <ElTabPane :label="`规格 (${specRows.length})`" name="spec">
-            <div class="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div class="text-sm text-[var(--el-text-color-secondary)]">
-                已绑定 {{ specRows.length }} 个规格属性
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <ElButton @click="openAttributeManager(1)">属性库</ElButton>
-                <ElButton
-                  type="danger"
-                  plain
-                  :disabled="selectedSpecRows.length === 0"
-                  @click="handleBatchUnbind('spec')"
-                >
-                  批量解绑（{{ selectedSpecRows.length }}）
-                </ElButton>
-                <ElButton type="primary" plain @click="openBindDrawer('spec')">绑定属性</ElButton>
-              </div>
-            </div>
-
             <CategoryRelationTable
               :rows="specRows"
+              @refresh="$emit('refresh')"
               @row-click="handleSpecRowClick"
               @selection-change="handleSpecSelectionChange"
               @edit="openRelationDrawer($event, 'spec')"
               @delete="handleUnbindRow"
-            />
+            >
+              <template #header-left>
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="flex flex-wrap gap-2">
+                    <ElButton @click="openAttributeManager(1)">属性库</ElButton>
+                    <ElButton
+                      type="danger"
+                      plain
+                      :disabled="selectedSpecRows.length === 0"
+                      @click="handleBatchUnbind('spec')"
+                    >
+                      批量解绑（{{ selectedSpecRows.length }}）
+                    </ElButton>
+                    <ElButton type="primary" plain @click="openBindDrawer('spec')">
+                      绑定属性
+                    </ElButton>
+                  </div>
+                  <div class="text-sm text-[var(--el-text-color-secondary)]">
+                    已绑定 {{ specRows.length }} 个规格属性
+                  </div>
+                </div>
+              </template>
+            </CategoryRelationTable>
           </ElTabPane>
 
           <ElTabPane :label="`参数 (${paramRows.length})`" name="param">
-            <div class="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div class="text-sm text-[var(--el-text-color-secondary)]">
-                已绑定 {{ paramRows.length }} 个参数属性
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <ElButton @click="openAttributeManager(0)">属性库</ElButton>
-                <ElButton
-                  type="danger"
-                  plain
-                  :disabled="selectedParamRows.length === 0"
-                  @click="handleBatchUnbind('param')"
-                >
-                  批量解绑（{{ selectedParamRows.length }}）
-                </ElButton>
-                <ElButton type="primary" plain @click="openBindDrawer('param')">绑定属性</ElButton>
-              </div>
-            </div>
-
             <CategoryRelationTable
               :rows="paramRows"
+              @refresh="$emit('refresh')"
               @row-click="handleParamRowClick"
               @selection-change="handleParamSelectionChange"
               @edit="openRelationDrawer($event, 'param')"
               @delete="handleUnbindRow"
-            />
+            >
+              <template #header-left>
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="flex flex-wrap gap-2">
+                    <ElButton @click="openAttributeManager(0)">属性库</ElButton>
+                    <ElButton
+                      type="danger"
+                      plain
+                      :disabled="selectedParamRows.length === 0"
+                      @click="handleBatchUnbind('param')"
+                    >
+                      批量解绑（{{ selectedParamRows.length }}）
+                    </ElButton>
+                    <ElButton type="primary" plain @click="openBindDrawer('param')">
+                      绑定属性
+                    </ElButton>
+                  </div>
+                  <div class="text-sm text-[var(--el-text-color-secondary)]">
+                    已绑定 {{ paramRows.length }} 个参数属性
+                  </div>
+                </div>
+              </template>
+            </CategoryRelationTable>
           </ElTabPane>
 
           <ElTabPane :label="`品牌 (${brandRows.length})`" name="brand">
@@ -155,32 +165,38 @@
               class="mb-4"
             />
 
-            <div class="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div class="text-sm text-[var(--el-text-color-secondary)]">
-                已绑定 {{ brandRows.length }} 个品牌
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <ElButton :disabled="!canCopyBrandsFromParent" @click="handleCopyBrandsFromParent">
-                  继承父分类品牌
-                </ElButton>
-                <ElButton
-                  type="danger"
-                  plain
-                  :disabled="selectedBrandRows.length === 0"
-                  @click="handleBatchUnbindBrands"
-                >
-                  批量解绑（{{ selectedBrandRows.length }}）
-                </ElButton>
-                <ElButton type="primary" plain @click="openBrandBindDrawer">绑定品牌</ElButton>
-              </div>
-            </div>
-
             <CategoryBrandTable
               :rows="brandRows"
               :loading="brandLoading"
+              @refresh="$emit('refresh')"
               @selection-change="handleBrandSelectionChange"
               @delete="handleUnbindBrand"
-            />
+            >
+              <template #header-left>
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="flex flex-wrap gap-2">
+                    <ElButton
+                      :disabled="!canCopyBrandsFromParent"
+                      @click="handleCopyBrandsFromParent"
+                    >
+                      继承父分类品牌
+                    </ElButton>
+                    <ElButton
+                      type="danger"
+                      plain
+                      :disabled="selectedBrandRows.length === 0"
+                      @click="handleBatchUnbindBrands"
+                    >
+                      批量解绑（{{ selectedBrandRows.length }}）
+                    </ElButton>
+                    <ElButton type="primary" plain @click="openBrandBindDrawer">绑定品牌</ElButton>
+                  </div>
+                  <div class="text-sm text-[var(--el-text-color-secondary)]">
+                    已绑定 {{ brandRows.length }} 个品牌
+                  </div>
+                </div>
+              </template>
+            </CategoryBrandTable>
           </ElTabPane>
 
           <ElTabPane label="模板复制" name="template">
@@ -638,7 +654,7 @@
           </div>
 
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <ElCard shadow="never">
+            <ElCard shadow="never" class="art-card-xs">
               <template #header>
                 <div class="font-medium">将新增</div>
               </template>
@@ -661,7 +677,7 @@
               </div>
             </ElCard>
 
-            <ElCard shadow="never">
+            <ElCard shadow="never" class="art-card-xs">
               <template #header>
                 <div class="font-medium">将删除</div>
               </template>
@@ -684,7 +700,7 @@
               </div>
             </ElCard>
 
-            <ElCard shadow="never">
+            <ElCard shadow="never" class="art-card-xs">
               <template #header>
                 <div class="font-medium">将跳过</div>
               </template>
@@ -805,6 +821,7 @@
     (e: 'edit', value: CategoryDetailItem): void
     (e: 'toggle-status', value: CategoryDetailItem): void
     (e: 'delete', value: CategoryDetailItem): void
+    (e: 'refresh'): void
   }
 
   const props = defineProps<Props>()

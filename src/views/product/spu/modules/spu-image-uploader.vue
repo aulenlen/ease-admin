@@ -108,7 +108,7 @@
   .spu-image-uploader__upload {
     :deep(.el-upload--picture-card),
     :deep(.el-upload-list__item) {
-      border-radius: 10px;
+      border-radius: calc(var(--shop-control-radius) + 1px);
     }
 
     :deep(.el-upload--picture-card) {
