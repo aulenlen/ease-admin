@@ -1,33 +1,24 @@
 <template>
   <div class="art-full-height inventory-page">
-    <div class="space-y-4">
-      <InventorySearch
-        v-show="showSearchBar"
-        v-model="searchForm"
-        :brand-options="filterOptions.brands"
-        :category-options="filterOptions.categories"
-        :stock-status-options="filterOptions.stockStatuses"
-        @search="handleSearch"
-        @reset="handleResetSearch"
-      />
-
-      <ElCard class="art-table-card inventory-page__workbench">
-        <div class="mb-3 border-b border-[var(--el-border-color-lighter)] pb-3">
-          <InventorySummaryCards :items="summaryCards" />
-        </div>
-
-        <div class="mb-3">
-          <SpuStatusTabs v-model="activeTab" :items="tabItems" />
-        </div>
-
-        <ArtTableHeader
-          v-model:columns="columnChecks"
-          v-model:showSearchBar="showSearchBar"
-          class="mb-3"
-          :loading="loading"
-          @refresh="refreshAll"
+    <EaseTablePage
+      class="inventory-page__workbench"
+      v-model:columns="columnChecks"
+      v-model:showSearchBar="showSearchBar"
+      :loading="loading"
+      @refresh="refreshAll"
+    >
+      <template #search>
+        <InventorySearch
+          v-model="searchForm"
+          :brand-options="filterOptions.brands"
+          :category-options="filterOptions.categories"
+          :stock-status-options="filterOptions.stockStatuses"
+          @search="handleSearch"
+          @reset="handleResetSearch"
         />
+      </template>
 
+      <template #table>
         <ArtTable
           :loading="loading"
           :data="data"
@@ -41,8 +32,8 @@
           @pagination:size-change="handleSizeChange"
           @pagination:current-change="handleCurrentChange"
         />
-      </ElCard>
-    </div>
+      </template>
+    </EaseTablePage>
 
     <InventoryLogDrawer
       v-model="logDrawerVisible"
@@ -64,7 +55,6 @@
 </template>
 
 <script setup lang="ts">
-  import { CircleCloseFilled, Goods, List, WarningFilled } from '@element-plus/icons-vue'
   import { ElImage, ElMessage, ElMessageBox, ElTag } from 'element-plus'
   import {
     createStock,
@@ -74,27 +64,23 @@
     fetchStockFilterOptions,
     fetchStockLogs,
     fetchStockPage,
-    fetchStockStats,
     updateStock,
     type CreateStockPayload,
     type InventoryFilterOptions,
     type InventorySkuRow,
     type InventorySpuRow,
-    type InventorySummary,
-    type InventoryTab,
     type SkuCandidate,
     type StockLogItem
   } from '@/api/sku-stock'
   import { useTable } from '@/hooks/core/useTable'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import EaseTablePage from '@/components/project/ease-table-page/index.vue'
   import InventoryCreateDialog, {
     type CreateInventoryForm
   } from './modules/inventory-create-dialog.vue'
   import InventoryLogDrawer from './modules/inventory-log-drawer.vue'
   import InventorySearch, { type InventorySearchForm } from './modules/inventory-search.vue'
   import InventorySpuExpand from './modules/inventory-spu-expand.vue'
-  import InventorySummaryCards from './modules/inventory-summary-cards.vue'
-  import SpuStatusTabs from '../spu/modules/spu-status-tabs.vue'
 
   defineOptions({ name: 'ProductInventoryPage' })
 
@@ -107,26 +93,12 @@
   const router = useRouter()
   const numberFormatter = new Intl.NumberFormat('zh-CN')
   const showSearchBar = ref(true)
-  const activeTab = ref<InventoryTab>('all')
   const expandedRowKeys = ref<string[]>([])
   const filterOptions = ref<InventoryFilterOptions>({
     brands: [],
     categories: [],
     stockStatuses: [],
     tabs: []
-  })
-  const summary = ref<InventorySummary>({
-    spuCount: 0,
-    skuCount: 0,
-    warningSpuCount: 0,
-    emptySpuCount: 0,
-    presaleSpuCount: 0
-  })
-  const tabTotals = ref<Record<InventoryTab, number>>({
-    all: 0,
-    warning: 0,
-    empty: 0,
-    presale: 0
   })
   const searchForm = ref<InventorySearchForm>({
     keyword: undefined,
@@ -307,10 +279,12 @@
     h('div', { class: 'flex items-center justify-start gap-2' }, [
       h(ArtButtonTable, {
         type: 'add',
+        iconClass: 'ease-table-action ease-table-action--add',
         onClick: () => openCreateDialog(row)
       }),
       h(ArtButtonTable, {
         type: 'view',
+        iconClass: 'ease-table-action ease-table-action--view',
         onClick: () => router.push(`/product/spu/detail/${row.spuId}`)
       })
     ])
@@ -321,7 +295,7 @@
     categoryId: searchForm.value.categoryId,
     stockStatus: searchForm.value.stockStatus,
     lowStockWarning: searchForm.value.lowStockWarning,
-    tab: activeTab.value
+    tab: 'all' as const
   })
 
   const mapInventorySpuRowState = (row: InventorySpuRow): InventorySpuRowState => ({
@@ -436,58 +410,6 @@
 
   const inventoryRows = computed(() => data.value as InventorySpuRowState[])
 
-  const summaryCards = computed(() => [
-    {
-      key: 'spu',
-      label: '在管商品',
-      value: formatNumber(summary.value.spuCount),
-      meta: `覆盖 ${formatNumber(summary.value.skuCount)} 个 SKU`,
-      tone: 'sky' as const,
-      icon: Goods
-    },
-    {
-      key: 'warning',
-      label: '低库存商品',
-      value: formatNumber(summary.value.warningSpuCount),
-      meta: '优先关注补货',
-      tone: 'slate' as const,
-      icon: List
-    },
-    {
-      key: 'empty',
-      label: '缺货商品',
-      value: formatNumber(summary.value.emptySpuCount),
-      meta: '建议尽快处理',
-      tone: 'amber' as const,
-      icon: WarningFilled
-    },
-    {
-      key: 'presale',
-      label: '预售商品',
-      value: formatNumber(summary.value.presaleSpuCount),
-      meta: '按页签查看明细',
-      tone: 'rose' as const,
-      icon: CircleCloseFilled
-    }
-  ])
-
-  const tabItems = computed(() => {
-    const source = filterOptions.value.tabs.length
-      ? filterOptions.value.tabs
-      : [
-          { value: 'all', label: '全部商品' },
-          { value: 'warning', label: '低库存商品' },
-          { value: 'empty', label: '缺货商品' },
-          { value: 'presale', label: '预售商品' }
-        ]
-
-    return source.map((item) => ({
-      key: item.value as InventoryTab,
-      label: item.label,
-      count: formatNumber(tabTotals.value[item.value as InventoryTab] || 0)
-    }))
-  })
-
   const isRowDirty = (row: InventorySkuRow) => {
     const origin = originBySkuId.value.get(row.skuId)
     if (!origin) return false
@@ -515,24 +437,13 @@
     filterOptions.value = await fetchStockFilterOptions()
   }
 
-  const loadStats = async () => {
-    const stats = await fetchStockStats({
-      current: pagination.current,
-      size: pagination.size,
-      ...buildSearchParams()
-    })
-
-    summary.value = stats.summary
-    tabTotals.value = stats.tabTotals
-  }
-
   const refreshAll = async () => {
-    await Promise.all([refreshData(), loadStats()])
+    await refreshData()
   }
 
   const handleSearch = async () => {
     replaceSearchParams(buildSearchParams())
-    await Promise.all([getData(), loadStats()])
+    await getData()
   }
 
   const handleResetSearch = async () => {
@@ -544,9 +455,8 @@
       stockStatus: undefined,
       lowStockWarning: false
     }
-    activeTab.value = 'all'
     replaceSearchParams(buildSearchParams())
-    await Promise.all([getData(), loadStats()])
+    await getData()
   }
 
   const handleSkuStockChange = (row: InventorySkuRow) => {
@@ -715,11 +625,6 @@
     resetCreateForm()
   }
 
-  watch(activeTab, async () => {
-    replaceSearchParams(buildSearchParams())
-    await Promise.all([getData(), loadStats()])
-  })
-
   watch(
     inventoryRows,
     async (rows) => {
@@ -738,39 +643,45 @@
   onMounted(async () => {
     await loadFilterOptions()
     replaceSearchParams(buildSearchParams())
-    await Promise.all([getData(), loadStats()])
+    await getData()
   })
 </script>
 
 <style scoped lang="scss">
-  .inventory-page__workbench {
-    :deep(.el-card__body) {
-      padding-top: 16px;
-    }
+  .inventory-page__toolbar-top {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
 
-    :deep(.inventory-page__expand-holder) {
-      width: 0 !important;
-      min-width: 0 !important;
-      padding: 0 !important;
-      border: 0 !important;
-    }
+  .inventory-page__toolbar-top :deep(.inventory-summary-cards) {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
 
-    :deep(.inventory-page__expand-holder .cell) {
-      display: none !important;
-      width: 0 !important;
-      min-width: 0 !important;
-      padding: 0 !important;
-      overflow: hidden !important;
-    }
+  :deep(.inventory-page__expand-holder) {
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
 
-    :deep(.inventory-page__expand-holder .el-table__expand-icon) {
-      display: none !important;
-    }
+  :deep(.inventory-page__expand-holder .cell) {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
 
-    :deep(.el-table__expanded-cell) {
-      padding: 0 !important;
-      background: transparent !important;
-      border-bottom: 0 !important;
-    }
+  :deep(.inventory-page__expand-holder .el-table__expand-icon) {
+    display: none !important;
+  }
+
+  :deep(.el-table__expanded-cell) {
+    padding: 0 !important;
+    background: transparent !important;
+    border-bottom: 0 !important;
   }
 </style>

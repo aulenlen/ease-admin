@@ -1,0 +1,352 @@
+:root {
+  /* 表格皮肤变量：
+   - 表头分隔线
+   - hover / 选中行背景
+   - 分页边框
+   - 行内操作按钮 hover 颜色
+   当前仍由项目层统一控制。 */
+  --ease-table-header-border: color-mix(
+    in srgb,
+    var(--art-card-border) 90%,
+    var(--default-box-color)
+  );
+  --ease-table-header-text-color: color-mix(in srgb, var(--el-text-color-primary) 94%, #000 6%);
+  --ease-table-checkbox-border: color-mix(in srgb, var(--theme-color) 16%, var(--art-card-border));
+  --ease-table-hover-bg: color-mix(in srgb, var(--theme-color) 6%, var(--default-box-color));
+  --ease-table-selected-bg: color-mix(in srgb, var(--theme-color) 10%, var(--default-box-color));
+  --ease-table-selected-hover-bg: color-mix(
+    in srgb,
+    var(--theme-color) 14%,
+    var(--default-box-color)
+  );
+  --ease-table-pagination-border: color-mix(
+    in srgb,
+    var(--art-card-border) 90%,
+    var(--default-box-color)
+  );
+  --ease-table-action-icon-color: var(--el-text-color-secondary);
+  --ease-table-action-hover-bg: color-mix(in srgb, var(--theme-color) 6%, var(--default-box-color));
+  --ease-table-action-hover-border: color-mix(
+    in srgb,
+    var(--art-card-border) 92%,
+    var(--default-box-color)
+  );
+  --ease-shell-button-bg: color-mix(
+    in srgb,
+    var(--el-fill-color-light) 72%,
+    var(--default-box-color)
+  );
+  --ease-shell-button-hover-bg: color-mix(
+    in srgb,
+    var(--el-fill-color) 78%,
+    var(--default-box-color)
+  );
+  --ease-shell-button-border: color-mix(
+    in srgb,
+    var(--art-card-border) 94%,
+    var(--default-box-color)
+  );
+  --ease-shell-button-primary-plain-bg: color-mix(
+    in srgb,
+    var(--theme-color) 3%,
+    var(--default-box-color)
+  );
+  --ease-shell-button-primary-plain-hover-bg: color-mix(
+    in srgb,
+    var(--theme-color) 7%,
+    var(--default-box-color)
+  );
+}
+
+html.dark {
+  --ease-table-header-border: color-mix(
+    in srgb,
+    var(--art-card-border) 84%,
+    var(--default-box-color)
+  );
+  --ease-table-header-text-color: color-mix(in srgb, var(--el-text-color-primary) 92%, white 8%);
+  --ease-table-checkbox-border: color-mix(in srgb, var(--theme-color) 24%, var(--art-card-border));
+  --ease-table-hover-bg: color-mix(in srgb, var(--theme-color) 18%, var(--default-box-color));
+  --ease-table-selected-bg: color-mix(in srgb, var(--theme-color) 24%, var(--default-box-color));
+  --ease-table-selected-hover-bg: color-mix(
+    in srgb,
+    var(--theme-color) 30%,
+    var(--default-box-color)
+  );
+  --ease-table-pagination-border: color-mix(
+    in srgb,
+    var(--art-card-border) 82%,
+    var(--default-box-color)
+  );
+  --ease-table-action-icon-color: color-mix(
+    in srgb,
+    var(--el-text-color-primary) 72%,
+    var(--default-box-color)
+  );
+  --ease-table-action-hover-bg: color-mix(
+    in srgb,
+    var(--theme-color) 14%,
+    var(--default-box-color)
+  );
+  --ease-table-action-hover-border: color-mix(
+    in srgb,
+    var(--art-card-border) 80%,
+    var(--default-box-color)
+  );
+  --ease-shell-button-bg: color-mix(
+    in srgb,
+    var(--el-fill-color-light) 34%,
+    var(--default-box-color)
+  );
+  --ease-shell-button-hover-bg: color-mix(
+    in srgb,
+    var(--el-fill-color) 42%,
+    var(--default-box-color)
+  );
+  --ease-shell-button-border: color-mix(
+    in srgb,
+    var(--art-card-border) 86%,
+    var(--default-box-color)
+  );
+  --ease-shell-button-primary-plain-bg: color-mix(
+    in srgb,
+    var(--theme-color) 8%,
+    var(--default-box-color)
+  );
+  --ease-shell-button-primary-plain-hover-bg: color-mix(
+    in srgb,
+    var(--theme-color) 14%,
+    var(--default-box-color)
+  );
+}
+
+[data-box-mode='border-mode'] {
+  --ease-table-pagination-border: var(--art-card-border);
+  --ease-table-action-hover-border: var(--art-card-border);
+}
+
+[data-box-mode='shadow-mode'] {
+  --ease-table-header-border: color-mix(
+    in srgb,
+    var(--art-card-border) 76%,
+    var(--default-box-color)
+  );
+  --ease-table-pagination-border: color-mix(
+    in srgb,
+    var(--art-card-border) 80%,
+    var(--default-box-color)
+  );
+  --ease-table-action-hover-border: color-mix(
+    in srgb,
+    var(--art-card-border) 84%,
+    var(--default-box-color)
+  );
+}
+
+.art-table {
+  /* 这里仍然控制表格通用皮肤：
+   - 表头线和表头文字颜色
+   - hover / 选中行背景
+   - 分页 hover、当前页 */
+  .el-table__header-wrapper th,
+  .el-table__fixed-header-wrapper th {
+    border-bottom-color: var(--ease-table-header-border) !important;
+  }
+
+  .el-table__header-wrapper th .cell,
+  .el-table__fixed-header-wrapper th .cell {
+    color: var(--ease-table-header-text-color) !important;
+  }
+
+  .el-table__header-wrapper th.gutter,
+  .el-table__fixed-header-wrapper th.gutter {
+    box-shadow: none !important;
+  }
+
+  .el-table__header-wrapper th.el-table__cell,
+  .el-table__fixed-header-wrapper th.el-table__cell {
+    .cell {
+      background: transparent !important;
+    }
+  }
+
+  .el-table__body tr:hover > td.el-table__cell,
+  .el-table__body tr[class*='--selected'] > td.el-table__cell {
+    background: var(--ease-table-hover-bg) !important;
+  }
+
+  .el-table__body tr[class*='--selected'] > td.el-table__cell {
+    background: var(--ease-table-selected-bg) !important;
+  }
+
+  .el-table__body tr[class*='--selected']:hover > td.el-table__cell {
+    background: var(--ease-table-selected-hover-bg) !important;
+  }
+
+  .pagination.custom-pagination .el-pagination {
+    .btn-prev,
+    .btn-next,
+    .el-pager li {
+      background: transparent !important;
+      box-shadow: none !important;
+      transition:
+        color 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease;
+    }
+
+    .btn-prev:hover:not(.is-disabled),
+    .btn-next:hover:not(.is-disabled),
+    .el-pager li:hover:not(.is-disabled) {
+      color: var(--theme-color) !important;
+    }
+
+    .el-pager li.is-active {
+      color: var(--el-color-white) !important;
+      background: var(--theme-color) !important;
+    }
+  }
+}
+
+.ease-table-page {
+  /* 这里现在只保留两类业务皮肤：
+   1. 删除按钮保持红色
+   2. 表格行内操作按钮保持当前图标风格
+   其它普通按钮样式已回到默认。 */
+  .el-button--danger {
+    color: #fff !important;
+    background: #cb3a1d !important;
+    border-color: #cb3a1d !important;
+
+    &:hover:not(.is-disabled),
+    &:focus-visible:not(.is-disabled) {
+      background: #b5341a !important;
+      border-color: #b5341a !important;
+    }
+
+    > span {
+      color: #fff !important;
+    }
+  }
+
+  .el-button--danger.is-plain {
+    color: #cb3a1d !important;
+    background: color-mix(in srgb, #cb3a1d 6%, var(--default-box-color)) !important;
+    border-color: color-mix(in srgb, #cb3a1d 26%, var(--art-card-border)) !important;
+
+    &:hover:not(.is-disabled),
+    &:focus-visible:not(.is-disabled) {
+      color: #b5341a !important;
+      background: color-mix(in srgb, #cb3a1d 10%, var(--default-box-color)) !important;
+      border-color: #cb3a1d !important;
+    }
+
+    > span {
+      color: inherit !important;
+    }
+  }
+
+  .ease-table-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 30px !important;
+    height: 30px !important;
+    padding: 0 8px !important;
+    margin-right: 0 !important;
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--ease-table-action-icon-color) !important;
+    transition:
+      background-color 0.18s ease,
+      border-color 0.18s ease,
+      color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .ease-table-action:hover,
+  .ease-table-action:focus-visible {
+    background: var(--ease-table-action-hover-bg) !important;
+    border-color: var(--ease-table-action-hover-border) !important;
+    box-shadow: none !important;
+  }
+}
+
+.ease-segment-tabs {
+  /* 项目级 tabs：
+   - 统一文本布局
+   - 字体不再单独定制，直接沿用表头文字体系
+   - count 仅保留圆边数字 */
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding-bottom: 2px;
+}
+
+.ease-segment-tabs__item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--el-text-color-secondary);
+  font-size: var(--el-font-size-base);
+  font-weight: normal;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.ease-segment-tabs__label {
+  display: inline-block;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+}
+
+.ease-segment-tabs__item:hover,
+.ease-segment-tabs__item:focus-visible {
+  color: var(--el-text-color-primary);
+}
+
+.ease-segment-tabs__item.is-active {
+  color: var(--el-text-color-primary);
+}
+
+.ease-segment-tabs__item.is-active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--theme-color);
+}
+
+.ease-segment-tabs__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 999px;
+  background: var(--el-fill-color);
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .ease-segment-tabs {
+    gap: 12px;
+  }
+}

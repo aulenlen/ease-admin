@@ -258,6 +258,12 @@
   const mergedTableProps = computed(() => ({
     ...attrs,
     ...props,
+    columns: undefined,
+    pagination: undefined,
+    paginationOptions: undefined,
+    emptyHeight: undefined,
+    emptyText: undefined,
+    showTableHeader: undefined,
     height: height.value,
     stripe: stripe.value,
     border: border.value,

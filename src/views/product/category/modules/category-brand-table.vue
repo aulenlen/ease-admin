@@ -1,35 +1,49 @@
 <template>
-  <ArtTableHeader
+  <EaseTablePage
+    embedded
     v-model:columns="columnChecks"
-    layout="refresh,size,fullscreen,columns,settings"
-    class="mb-3"
+    :loading="!!loading"
+    :selection-count="selectionCount"
+    table-header-layout="refresh,size,fullscreen,columns,settings"
     @refresh="$emit('refresh')"
   >
-    <template #left>
+    <template #headerLeft>
       <slot name="header-left" />
     </template>
-  </ArtTableHeader>
 
-  <ArtTable
-    :loading="!!loading"
-    :data="rows"
-    row-key="id"
-    :show-table-header="false"
-    :columns="columns"
-    @selection-change="handleSelectionChange"
-  />
+    <template #selectionText="{ count }">
+      <slot name="selection-text" :count="count">已选 {{ count }} 个品牌</slot>
+    </template>
+
+    <template #selectionActions>
+      <slot name="selection-actions" :count="selectionCount" />
+    </template>
+
+    <template #table>
+      <ArtTable
+        ref="tableRef"
+        :loading="!!loading"
+        :data="rows"
+        row-key="id"
+        :show-table-header="false"
+        :columns="columns"
+        @selection-change="handleSelectionChange"
+      />
+    </template>
+  </EaseTablePage>
 </template>
 
 <script setup lang="ts">
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import EaseTablePage from '@/components/project/ease-table-page/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtTableHeader from '@/components/core/tables/art-table-header/index.vue'
   import { useTableColumns } from '@/hooks/core/useTableColumns'
   import type { BrandListItem } from '@/api/brand'
 
   interface Props {
     rows: BrandListItem[]
     loading?: boolean
+    selectionCount?: number
   }
 
   interface Emits {
@@ -38,13 +52,20 @@
     (e: 'delete', value: number): void
   }
 
-  defineProps<Props>()
+  const props = withDefaults(defineProps<Props>(), {
+    loading: false,
+    selectionCount: 0
+  })
   const emit = defineEmits<Emits>()
+  const tableRef = ref<{
+    elTableRef?: { toggleAllSelection: () => void; clearSelection: () => void }
+  }>()
+  const { rows, loading, selectionCount } = toRefs(props)
 
   const { columns, columnChecks } = useTableColumns<BrandListItem>(() => [
     {
       type: 'selection',
-      width: 48
+      width: 56
     },
     {
       prop: 'brand',
@@ -104,6 +125,7 @@
         h('div', { class: 'flex' }, [
           h(ArtButtonTable, {
             type: 'delete',
+            iconClass: 'ease-table-action ease-table-action--delete',
             onClick: () => emit('delete', row.id)
           })
         ])

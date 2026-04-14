@@ -1,59 +1,63 @@
 <template>
-  <div class="art-full-height">
-    <SpuSearch
-      v-show="showSearchBar"
-      v-model="searchForm"
-      :brand-options="brandOptions"
-      :category-options="categoryTree"
-      @search="handleSearch"
-      @reset="handleResetSearch"
-    />
+  <EaseTablePage
+    class="product-spu-page"
+    v-model:columns="columnChecks"
+    v-model:showSearchBar="showSearchBar"
+    :loading="loading"
+    :selection-count="selectedIds.length"
+    @refresh="refreshAll"
+  >
+    <template #pageActions>
+      <ElButton type="primary" @click="router.push('/product/spu/create')" v-ripple>
+        创建商品
+      </ElButton>
+    </template>
 
-    <ElCard class="art-table-card" :style="{ 'margin-top': showSearchBar ? '12px' : '0' }">
-      <ArtTableHeader
-        v-model:columns="columnChecks"
-        v-model:showSearchBar="showSearchBar"
-        :loading="loading"
-        @refresh="refreshAll"
-      >
-        <template #left>
-          <div class="flex flex-col gap-3">
-            <SpuStatusTabs v-model="activeTab" :items="tabItems" />
+    <template #toolbarTop>
+      <EaseSegmentTabs v-model="activeTab" :items="tabItems" />
+    </template>
 
-            <ElSpace wrap>
-              <ElButton @click="router.push('/product/spu/create')" v-ripple>新增商品</ElButton>
-              <ElButton :disabled="!selectedIds.length" @click="handleBatchPublish(1)" v-ripple>
-                批量上架
-              </ElButton>
-              <ElButton :disabled="!selectedIds.length" @click="handleBatchPublish(0)" v-ripple>
-                批量下架
-              </ElButton>
-            </ElSpace>
-          </div>
-        </template>
-      </ArtTableHeader>
+    <template #search>
+      <SpuSearch
+        v-model="searchForm"
+        class="product-spu-page__search"
+        :brand-options="brandOptions"
+        :category-options="categoryTree"
+        @search="handleSearch"
+      />
+    </template>
 
+    <template #selectionText="{ count }">已选{{ count }}个商品</template>
+
+    <template #selectionActions>
+      <ElButton v-if="selectionPublishAction" @click="handleSelectionPublish" v-ripple>
+        {{ selectionPublishAction.label }}
+      </ElButton>
+    </template>
+
+    <template #table>
       <ArtTable
+        ref="tableRef"
         :loading="loading"
         :data="data"
         :columns="columns"
         :pagination="pagination"
         :pagination-options="{ hideOnSinglePage: false, align: 'right' }"
+        :row-class-name="getRowClassName"
+        :show-table-header="false"
         @selection-change="handleSelectionChange"
         @pagination:size-change="handleSizeChange"
         @pagination:current-change="handleCurrentChange"
       />
-    </ElCard>
-  </div>
+    </template>
+  </EaseTablePage>
 </template>
 
 <script setup lang="ts">
   import {
-    deleteSpu,
     fetchSpuPage,
     fetchSpuStats,
     publishSpu,
-    type SpuFlag01,
     type SpuListItem,
     type SpuQueryParams
   } from '@/api/spu'
@@ -61,24 +65,47 @@
   import { fetchCategoryTree, type CategoryTreeItem } from '@/api/category'
   import { useTable } from '@/hooks/core/useTable'
   import { formatDateTime } from '@/utils/date'
-  import ArtButtonMore, {
-    type ButtonMoreItem
-  } from '@/components/core/forms/art-button-more/index.vue'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import EaseTablePage from '@/components/project/ease-table-page/index.vue'
+  import EaseSegmentTabs from '@/components/project/ease-segment-tabs/index.vue'
   import SpuSearch, { type SpuSearchForm } from './modules/spu-search.vue'
-  import { getSpuDisplayStatus, getSpuPublishAction } from './modules/spu-publish-action'
-  import SpuStatusTabs, { type SpuStatusTabKey } from './modules/spu-status-tabs.vue'
-  import { consumeSpuListDirtyFlag } from './modules/spu-list-cache'
-  import { ElImage, ElMessageBox, ElTag } from 'element-plus'
+  import { getSpuPublishAction, type SpuPublishAction } from './modules/spu-publish-action'
+  import type { SpuStatusTabKey } from './modules/spu-status-tabs'
+  import { ElImage, ElMessageBox, ElSwitch } from 'element-plus'
 
   defineOptions({ name: 'ProductSpuPage' })
 
   const router = useRouter()
+  const tableRef = ref<{
+    elTableRef?: { toggleAllSelection: () => void; clearSelection: () => void }
+  }>()
   const showSearchBar = ref(true)
   const selectedIds = ref<number[]>([])
+  const switchingIds = ref<number[]>([])
   const brandOptions = ref<BrandListItem[]>([])
   const categoryTree = ref<CategoryTreeItem[]>([])
   const activeTab = ref<SpuStatusTabKey>('all')
+  const selectedRows = computed(() =>
+    data.value.filter((item) => selectedIds.value.includes(item.id))
+  )
+  const selectionPublishAction = computed<SpuPublishAction | null>(() => {
+    if (!selectedRows.value.length) return null
+
+    const actions = selectedRows.value.map((item) => getSpuPublishAction(item))
+    const [firstAction] = actions
+
+    if (!firstAction || firstAction.disabled) return null
+
+    const isSameAction = actions.every(
+      (item) =>
+        !item.disabled &&
+        item.label === firstAction.label &&
+        item.nextStatus === firstAction.nextStatus &&
+        item.confirmTitle === firstAction.confirmTitle
+    )
+
+    return isSameAction ? firstAction : null
+  })
   const stats = ref({
     all: 0,
     publish: 0,
@@ -94,11 +121,11 @@
   })
 
   const tabItems = computed(() => [
-    { key: 'all' as const, label: '全部商品', count: stats.value.all },
-    { key: 'publish' as const, label: '已上架', count: stats.value.publish },
-    { key: 'unpublish' as const, label: '未上架', count: stats.value.unpublish },
-    { key: 'verify' as const, label: '待审核', count: stats.value.verify },
-    { key: 'staged' as const, label: '已修改未发布', count: stats.value.staged }
+    { value: 'all' as const, label: '全部商品', count: stats.value.all },
+    { value: 'publish' as const, label: '已上架', count: stats.value.publish },
+    { value: 'unpublish' as const, label: '未上架', count: stats.value.unpublish },
+    { value: 'verify' as const, label: '待审核', count: stats.value.verify },
+    { value: 'staged' as const, label: '已修改未发布', count: stats.value.staged }
   ])
 
   const buildTabQuery = (): Partial<SpuQueryParams> => {
@@ -133,7 +160,6 @@
     pagination,
     getData,
     replaceSearchParams,
-    resetSearchParams,
     handleSizeChange,
     handleCurrentChange,
     refreshData
@@ -155,40 +181,48 @@
           label: '序号'
         },
         {
-          prop: 'pic',
-          label: '商品图片',
-          width: 110,
-          formatter: (row) =>
-            row.pic
-              ? h(ElImage, {
-                  src: row.pic,
-                  fit: 'cover',
-                  class: 'size-12 rounded-lg',
-                  previewSrcList: [row.pic],
-                  previewTeleported: true
-                })
-              : h('div', { class: 'text-xs text-g-500' }, '暂无图片')
-        },
-        {
           prop: 'name',
           label: '商品信息',
-          minWidth: 280,
+          minWidth: 320,
           formatter: (row) =>
-            h('div', { class: 'flex flex-col gap-1' }, [
+            h('div', { class: 'flex items-center gap-3 min-w-0' }, [
+              row.pic
+                ? h(ElImage, {
+                    src: row.pic,
+                    fit: 'cover',
+                    class: 'size-10 rounded-lg shrink-0',
+                    previewSrcList: [row.pic],
+                    previewTeleported: true
+                  })
+                : h(
+                    'div',
+                    {
+                      class:
+                        'size-10 shrink-0 rounded-lg bg-[var(--el-fill-color-light)] text-xs text-g-500 flex items-center justify-center'
+                    },
+                    '暂无图片'
+                  ),
               h(
                 'button',
                 {
-                  class: 'cursor-pointer text-left font-medium text-g-900',
+                  class: 'min-w-0 flex-1 cursor-pointer text-left font-medium text-g-900 truncate',
                   onClick: () => router.push(`/product/spu/detail/${row.id}`)
                 },
                 row.name
-              ),
-              h(
-                'div',
-                { class: 'text-xs text-g-500' },
-                `品牌：${row.brandName || '-'} ｜ 编码：${row.spuCode || '-'}`
               )
             ])
+        },
+        {
+          prop: 'brandName',
+          label: '品牌',
+          minWidth: 140,
+          formatter: (row) => row.brandName || '-'
+        },
+        {
+          prop: 'spuCode',
+          label: 'SPU 编码',
+          minWidth: 180,
+          formatter: (row) => row.spuCode || '-'
         },
         {
           prop: 'price',
@@ -208,26 +242,21 @@
         {
           prop: 'publishStatus',
           label: '状态',
-          width: 160,
+          width: 132,
           formatter: (row) => {
-            const displayStatus = getSpuDisplayStatus(row)
+            const publishAction = getSpuPublishAction(row)
+            const checked = Number(row.publishStatus ?? 0) === 1
+            const text = publishAction.disabled ? '待审核' : publishAction.label
 
-            return h('div', { class: 'flex flex-wrap items-center gap-x-2 gap-y-1' }, [
-              h(
-                ElTag,
-                {
-                  type: displayStatus.type,
-                  class: 'm-0 rounded-full !px-2 text-xs font-medium'
-                },
-                () => displayStatus.text
-              ),
-              Number(row.recommendStatus ?? 0) === 1
-                ? h(
-                    ElTag,
-                    { type: 'danger', class: 'm-0 rounded-full !px-2 text-xs font-medium' },
-                    () => '推荐'
-                  )
-                : null
+            return h('div', { class: 'flex items-center gap-2 text-[12px] text-g-700' }, [
+              h(ElSwitch, {
+                modelValue: checked,
+                loading: isSwitching(row.id),
+                disabled: publishAction.disabled || isSwitching(row.id),
+                inlinePrompt: false,
+                beforeChange: () => handleSinglePublish(row)
+              }),
+              h('span', text)
             ])
           }
         },
@@ -240,55 +269,21 @@
         {
           prop: 'operation',
           label: '操作',
-          width: 150,
+          width: 112,
           fixed: 'right',
-          formatter: (row) => {
-            const publishAction = getSpuPublishAction(row)
-            const moreActions: ButtonMoreItem[] = [
-              {
-                key: 'toggle-publish',
-                label: publishAction.disabled
-                  ? '待审核不可上架'
-                  : publishAction.label === '发布更新'
-                    ? '发布最新修改'
-                    : `${publishAction.label}商品`,
-                icon:
-                  publishAction.label === '下架'
-                    ? 'ri:download-line'
-                    : publishAction.label === '发布更新'
-                      ? 'ri:upload-cloud-2-line'
-                      : 'ri:upload-line',
-                color:
-                  publishAction.label === '下架'
-                    ? '#f59e0b'
-                    : publishAction.label === '发布更新'
-                      ? '#6366f1'
-                      : '#10b981',
-                disabled: publishAction.disabled
-              },
-              {
-                key: 'delete',
-                label: '删除商品',
-                icon: 'ri:delete-bin-5-line',
-                color: '#ef4444'
-              }
-            ]
-
-            return h('div', { class: 'flex items-center gap-2 max-md:gap-1.5' }, [
+          formatter: (row) =>
+            h('div', { class: 'flex items-center gap-2 max-md:gap-1.5' }, [
               h(ArtButtonTable, {
                 type: 'view',
+                iconClass: 'ease-table-action ease-table-action--view',
                 onClick: () => router.push(`/product/spu/detail/${row.id}`)
               }),
               h(ArtButtonTable, {
                 type: 'edit',
+                iconClass: 'ease-table-action ease-table-action--edit',
                 onClick: () => router.push(`/product/spu/edit/${row.id}`)
-              }),
-              h(ArtButtonMore, {
-                list: moreActions,
-                onClick: (item: ButtonMoreItem) => handleMoreAction(item, row)
               })
             ])
-          }
         }
       ]
     }
@@ -317,22 +312,12 @@
   }
 
   const refreshAll = async () => {
+    selectedIds.value = []
     await Promise.all([refreshData(), loadStats()])
   }
 
   const handleSearch = async () => {
-    replaceSearchParams(buildSearchQuery())
-    await Promise.all([getData(), loadStats()])
-  }
-
-  const handleResetSearch = async () => {
-    resetSearchParams()
-    searchForm.value = {
-      keyword: undefined,
-      brandId: undefined,
-      categoryId: undefined
-    }
-    activeTab.value = 'all'
+    selectedIds.value = []
     replaceSearchParams(buildSearchQuery())
     await Promise.all([getData(), loadStats()])
   }
@@ -341,64 +326,27 @@
     selectedIds.value = selection.map((item) => item.id)
   }
 
-  const handleDelete = async (row: SpuListItem) => {
-    await ElMessageBox.confirm(`确定删除商品“${row.name}”吗？`, '删除确认', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+  const isSwitching = (id: number) => switchingIds.value.includes(id)
 
-    await deleteSpu(row.id)
-    await refreshAll()
-  }
-
-  const handleMoreAction = async (item: ButtonMoreItem, row: SpuListItem) => {
-    if (item.key === 'toggle-publish') {
-      await handleSinglePublish(row)
+  const setSwitching = (id: number, loading: boolean) => {
+    if (loading) {
+      if (!switchingIds.value.includes(id)) switchingIds.value.push(id)
       return
     }
 
-    if (item.key === 'delete') {
-      await handleDelete(row)
-    }
+    switchingIds.value = switchingIds.value.filter((item) => item !== id)
   }
 
-  const handleBatchPublish = async (publishStatus: SpuFlag01) => {
-    const invalidRows = data.value.filter(
-      (item) => selectedIds.value.includes(item.id) && getSpuPublishAction(item).disabled
-    )
+  const getRowClassName = ({ row }: { row: SpuListItem }) => {
+    return selectedIds.value.includes(row.id) ? 'product-spu-page__table-row--selected' : ''
+  }
+
+  const handleBatchPublish = async (action: SpuPublishAction) => {
+    const invalidRows = selectedRows.value.filter((item) => getSpuPublishAction(item).disabled)
 
     if (invalidRows.length) {
-      ElMessageBox.alert(
-        '当前选中商品中包含待审核数据，待审核商品不允许执行上架操作。',
-        '批量操作提示',
-        {
-          confirmButtonText: '知道了',
-          type: 'warning'
-        }
-      )
-      return
-    }
-
-    const actionText = publishStatus === 1 ? '上架' : '下架'
-    await ElMessageBox.confirm(
-      `确定${actionText}已选中的 ${selectedIds.value.length} 个商品吗？`,
-      `批量${actionText}确认`,
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    await publishSpu(selectedIds.value, publishStatus)
-    await refreshAll()
-  }
-
-  const handleSinglePublish = async (row: SpuListItem) => {
-    const action = getSpuPublishAction(row)
-
-    if (action.disabled) {
-      await ElMessageBox.alert('待审核商品不能上架，请先完成审核。', '操作提示', {
+      ElMessageBox.alert('当前选中商品中包含待审核数据，待审核商品不允许执行该操作。', '操作提示', {
+        customClass: 'product-spu-page__message-box',
         confirmButtonText: '知道了',
         type: 'warning'
       })
@@ -406,19 +354,55 @@
     }
 
     await ElMessageBox.confirm(
-      `${action.confirmTitle.replace('该商品', `商品“${row.name}”`)}`,
-      action.label === '发布更新' ? '发布更新确认' : `${action.label}确认`,
+      `确定${action.label}已选中的 ${selectedIds.value.length} 个商品吗？`,
+      `${action.label}确认`,
       {
+        customClass: 'product-spu-page__message-box',
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }
     )
-    await publishSpu([row.id], action.nextStatus)
+    await publishSpu(selectedIds.value, action.nextStatus)
     await refreshAll()
   }
 
+  const handleSelectionPublish = async () => {
+    if (!selectionPublishAction.value) return
+    await handleBatchPublish(selectionPublishAction.value)
+  }
+
+  const handleSinglePublish = async (row: SpuListItem) => {
+    const action = getSpuPublishAction(row)
+
+    try {
+      await ElMessageBox.confirm(
+        `${action.confirmTitle.replace('该商品', `商品“${row.name}”`)}`,
+        action.label === '发布更新' ? '发布更新确认' : `${action.label}确认`,
+        {
+          customClass: 'product-spu-page__message-box',
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
+    } catch {
+      return false
+    }
+
+    setSwitching(row.id, true)
+
+    try {
+      await publishSpu([row.id], action.nextStatus)
+      await refreshAll()
+      return true
+    } finally {
+      setSwitching(row.id, false)
+    }
+  }
+
   watch(activeTab, async () => {
+    selectedIds.value = []
     replaceSearchParams(buildSearchQuery())
     await Promise.all([getData(), loadStats()])
   })
@@ -429,11 +413,5 @@
     await Promise.all([getData(), loadStats()])
   })
 
-  onActivated(async () => {
-    if (consumeSpuListDirtyFlag()) {
-      await refreshAll()
-      return
-    }
-    await refreshAll()
-  })
+  onActivated(refreshAll)
 </script>

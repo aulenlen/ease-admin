@@ -1,29 +1,41 @@
 <template>
-  <ArtTableHeader
+  <EaseTablePage
+    embedded
     v-model:columns="columnChecks"
-    layout="refresh,size,fullscreen,columns,settings"
-    class="mb-3"
+    :selection-count="selectionCount"
+    table-header-layout="refresh,size,fullscreen,columns,settings"
     @refresh="$emit('refresh')"
   >
-    <template #left>
+    <template #headerLeft>
       <slot name="header-left" />
     </template>
-  </ArtTableHeader>
 
-  <ArtTable
-    :data="rows"
-    :row-key="getRelationRowKey"
-    :show-table-header="false"
-    :columns="columns"
-    @row-click="handleRowClick"
-    @selection-change="handleSelectionChange"
-  />
+    <template #selectionText="{ count }">
+      <slot name="selection-text" :count="count">已选 {{ count }} 项</slot>
+    </template>
+
+    <template #selectionActions>
+      <slot name="selection-actions" :count="selectionCount" />
+    </template>
+
+    <template #table>
+      <ArtTable
+        ref="tableRef"
+        :data="rows"
+        :row-key="getRelationRowKey"
+        :show-table-header="false"
+        :columns="columns"
+        @row-click="handleRowClick"
+        @selection-change="handleSelectionChange"
+      />
+    </template>
+  </EaseTablePage>
 </template>
 
 <script setup lang="ts">
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import EaseTablePage from '@/components/project/ease-table-page/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import ArtTableHeader from '@/components/core/tables/art-table-header/index.vue'
   import { useTableColumns } from '@/hooks/core/useTableColumns'
   import OptionTagPreview from './option-tag-preview.vue'
   import type { WorkbenchRelationRow } from './category-workbench-shared'
@@ -34,6 +46,7 @@
 
   interface Props {
     rows: WorkbenchRelationRow[]
+    selectionCount?: number
   }
 
   interface Emits {
@@ -44,13 +57,19 @@
     (e: 'delete', value: WorkbenchRelationRow): void
   }
 
-  defineProps<Props>()
+  const props = withDefaults(defineProps<Props>(), {
+    selectionCount: 0
+  })
   const emit = defineEmits<Emits>()
+  const tableRef = ref<{
+    elTableRef?: { toggleAllSelection: () => void; clearSelection: () => void }
+  }>()
+  const { rows, selectionCount } = toRefs(props)
 
   const { columns, columnChecks } = useTableColumns<WorkbenchRelationRow>(() => [
     {
       type: 'selection',
-      width: 48
+      width: 56
     },
     {
       prop: 'attrName',
@@ -104,10 +123,12 @@
         h('div', { class: 'flex gap-2' }, [
           h(ArtButtonTable, {
             type: 'edit',
+            iconClass: 'ease-table-action ease-table-action--edit',
             onClick: () => emit('edit', row)
           }),
           h(ArtButtonTable, {
             type: 'delete',
+            iconClass: 'ease-table-action ease-table-action--delete',
             onClick: () => emit('delete', row)
           })
         ])

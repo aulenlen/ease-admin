@@ -20,6 +20,16 @@ export const productRoutes: AppRouteRecord = {
       }
     },
     {
+      path: 'attribute',
+      name: 'ProductAttribute',
+      component: '/product/attribute/index',
+      meta: {
+        title: 'menus.product.attribute',
+        icon: 'ri:database-2-line',
+        keepAlive: true
+      }
+    },
+    {
       path: 'brand',
       name: 'ProductBrand',
       component: '/product/brand/index',

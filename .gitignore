@@ -10,6 +10,8 @@ node_modules/
 dist/
 AGENTS.md
 .codex
+CLAUDE.md
+refhtml
 
 # Auto-generated files
 src/types/import/auto-imports.d.ts

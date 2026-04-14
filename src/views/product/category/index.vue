@@ -1,27 +1,17 @@
 <template>
   <div class="category-page art-full-height">
-    <div class="grid h-full gap-4 max-lg:h-auto lg:grid-cols-[320px_minmax(0,1fr)]">
+    <div class="grid h-full gap-4 max-lg:h-auto lg:grid-cols-[240px_minmax(0,1fr)]">
       <ElCard class="art-card-xs flex min-h-0 flex-col overflow-hidden" shadow="never">
-        <template #header>
-          <div class="flex items-center justify-between">
-            <span class="font-medium">分类树</span>
-            <ElButton text @click="openCreateRoot">新增顶级</ElButton>
-          </div>
-        </template>
-
-        <CategorySegmentTabs
+        <EaseSegmentTabs
           v-model="treeStatusFilter"
-          :options="treeStatusOptions"
+          :items="treeStatusOptions"
           class="mb-3"
           @change="handleTreeStatusFilterChange"
         />
 
-        <ElInput
-          v-model.trim="treeKeyword"
-          clearable
-          placeholder="搜索分类"
-          class="mb-3"
-        />
+        <EaseTableSearch class="mb-3" columns="minmax(0, 1fr)">
+          <ElInput v-model.trim="treeKeyword" clearable placeholder="搜索分类" />
+        </EaseTableSearch>
 
         <ElScrollbar class="category-page__tree-scroll">
           <ElTree
@@ -40,16 +30,22 @@
                   <span class="truncate">{{ data.name }}</span>
                 </ElTooltip>
                 <div class="category-page__tree-node-actions flex shrink-0 items-center gap-1">
-                  <ElTooltip content="新增子类" placement="top">
-                    <ElButton text @click.stop="openCreateChild(data)">
-                      <ElIcon class="text-base"><Plus /></ElIcon>
-                    </ElButton>
-                  </ElTooltip>
-                  <ElTooltip content="编辑分类" placement="top">
-                    <ElButton text @click.stop="openEdit(data)">
-                      <ElIcon class="text-base"><Edit /></ElIcon>
-                    </ElButton>
-                  </ElTooltip>
+                  <button
+                    type="button"
+                    class="category-page__tree-action-btn"
+                    aria-label="新增子类"
+                    @click.stop="openCreateChild(data)"
+                  >
+                    <ElIcon class="text-base"><Plus /></ElIcon>
+                  </button>
+                  <button
+                    type="button"
+                    class="category-page__tree-action-btn"
+                    aria-label="编辑分类"
+                    @click.stop="openEdit(data)"
+                  >
+                    <ElIcon class="text-base"><Edit /></ElIcon>
+                  </button>
                 </div>
               </div>
             </template>
@@ -92,11 +88,12 @@
     type CategoryFlag01,
     type CategoryTreeItem
   } from '@/api/category'
-  import CategoryDialog from './modules/category-dialog.vue'
-  import CategorySegmentTabs from './modules/category-segment-tabs.vue'
-  import CategoryWorkbench from './modules/category-workbench.vue'
+  import EaseTableSearch from '@/components/project/ease-table-search/index.vue'
+  import EaseSegmentTabs from '@/components/project/ease-segment-tabs/index.vue'
   import { Edit, Plus } from '@element-plus/icons-vue'
   import { ElMessageBox } from 'element-plus'
+  import CategoryDialog from './modules/category-dialog.vue'
+  import CategoryWorkbench from './modules/category-workbench.vue'
 
   defineOptions({ name: 'ProductCategoryPage' })
 
@@ -133,11 +130,17 @@
 
   const filteredTree = computed(() => cloneTree(treeData.value))
 
-  function collectExpandedKeys(nodes: CategoryTreeItem[], keyword: string, keys = new Set<number>()) {
+  function collectExpandedKeys(
+    nodes: CategoryTreeItem[],
+    keyword: string,
+    keys = new Set<number>()
+  ) {
     const lowerKeyword = String(keyword || '').toLowerCase()
 
     nodes.forEach((node) => {
-      const selfMatched = String(node.name || '').toLowerCase().includes(lowerKeyword)
+      const selfMatched = String(node.name || '')
+        .toLowerCase()
+        .includes(lowerKeyword)
       const hasChildren = Array.isArray(node.children) && node.children.length > 0
 
       if (hasChildren) {
@@ -191,12 +194,6 @@
     loadCategoryDetail(node.id)
   }
 
-  function openCreateRoot() {
-    dialogType.value = 'add'
-    dialogCategoryData.value = { parentId: 0 }
-    dialogVisible.value = true
-  }
-
   function openCreateChild(node: CategoryTreeItem) {
     dialogType.value = 'add'
     dialogCategoryData.value = { parentId: node.id }
@@ -209,13 +206,9 @@
     dialogVisible.value = true
   }
 
-  async function setTreeStatusFilter(value: -1 | 0 | 1) {
-    treeStatusFilter.value = value
-    await loadCategoryTree()
-  }
-
   async function handleTreeStatusFilterChange(value: string | number) {
-    await setTreeStatusFilter(value as -1 | 0 | 1)
+    treeStatusFilter.value = value as -1 | 0 | 1
+    await loadCategoryTree()
   }
 
   async function toggleEnableStatus(node: CategoryTreeItem | CategoryDetailItem) {
@@ -267,10 +260,12 @@
     treeRef.value?.filter?.(value)
 
     if (!value) {
-      treeRef.value?.store?.nodesMap &&
-        Object.values(treeRef.value.store.nodesMap).forEach((node: any) => {
+      const nodesMap = treeRef.value?.store?.nodesMap
+      if (nodesMap) {
+        Object.values(nodesMap).forEach((node: any) => {
           if (node.level > 0) node.expanded = false
         })
+      }
       return
     }
 
@@ -296,15 +291,35 @@
   }
 
   .category-page__tree-node-actions {
-    opacity: 0;
     pointer-events: none;
+    opacity: 0;
     transition: opacity 0.15s ease;
+  }
+
+  .category-page__tree-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: var(--theme-color);
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    transition: color 0.18s ease;
+  }
+
+  .category-page__tree-action-btn:hover,
+  .category-page__tree-action-btn:focus-visible {
+    color: var(--el-color-primary-dark-2);
+    outline: none;
   }
 
   :deep(.el-tree-node__content:hover .category-page__tree-node-actions),
   :deep(.el-tree-node.is-current > .el-tree-node__content .category-page__tree-node-actions) {
-    opacity: 1;
     pointer-events: auto;
+    opacity: 1;
   }
 
   @media (width <= 1024px) {

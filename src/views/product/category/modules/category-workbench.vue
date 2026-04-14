@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="category-workbench ease-table-page flex flex-col gap-4">
     <section class="art-card-xs p-4">
       <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div class="min-w-0 flex-1">
@@ -15,18 +15,9 @@
               {{ snapshot.isLeaf ? '叶子分类' : '非叶子模板' }}
             </ElTag>
           </div>
-
-          <div class="mt-1.5 text-sm text-[var(--el-text-color-secondary)]">
-            <span>ID：{{ category.id }}</span>
-            <span class="mx-2">/</span>
-            <span>层级：{{ category.level }}</span>
-            <span class="mx-2">/</span>
-            <span>路径：{{ category.path || '—' }}</span>
-          </div>
         </div>
 
         <div class="flex flex-wrap justify-end gap-2">
-          <ElButton @click="$emit('create-child', category)">新增子类</ElButton>
           <ElButton @click="$emit('edit', category)">编辑</ElButton>
           <ElButton @click="$emit('toggle-status', category)">
             {{ Number(category.enableStatus) === 1 ? '停用' : '启用' }}
@@ -65,13 +56,6 @@
     </section>
 
     <ElCard class="art-card-xs overflow-hidden" shadow="never">
-      <template #header>
-        <div class="flex items-center justify-between gap-3">
-          <div class="font-medium">分类工作台</div>
-          <ElButton text @click="handleRefresh">刷新</ElButton>
-        </div>
-      </template>
-
       <div v-loading="snapshotLoading">
         <ElAlert
           v-if="snapshotError"
@@ -89,10 +73,17 @@
           class="mb-4"
         />
 
-        <ElTabs v-model="activeTab">
-          <ElTabPane :label="`规格 (${specRows.length})`" name="spec">
+        <EaseSegmentTabs
+          v-model="activeTab"
+          :items="workbenchTabOptions"
+          class="category-workbench__tabs"
+        />
+
+        <div class="mt-4 flex flex-col gap-4">
+          <section v-show="activeTab === 'spec'">
             <CategoryRelationTable
               :rows="specRows"
+              :selection-count="selectedSpecRows.length"
               @refresh="$emit('refresh')"
               @row-click="handleSpecRowClick"
               @selection-change="handleSpecSelectionChange"
@@ -102,30 +93,26 @@
               <template #header-left>
                 <div class="flex flex-wrap items-center gap-3">
                   <div class="flex flex-wrap gap-2">
-                    <ElButton @click="openAttributeManager(1)">属性库</ElButton>
-                    <ElButton
-                      type="danger"
-                      plain
-                      :disabled="selectedSpecRows.length === 0"
-                      @click="handleBatchUnbind('spec')"
-                    >
-                      批量解绑（{{ selectedSpecRows.length }}）
-                    </ElButton>
-                    <ElButton type="primary" plain @click="openBindDrawer('spec')">
-                      绑定属性
-                    </ElButton>
+                    <ElButton @click="openBindDrawer('spec')">绑定属性</ElButton>
                   </div>
                   <div class="text-sm text-[var(--el-text-color-secondary)]">
                     已绑定 {{ specRows.length }} 个规格属性
                   </div>
                 </div>
               </template>
-            </CategoryRelationTable>
-          </ElTabPane>
 
-          <ElTabPane :label="`参数 (${paramRows.length})`" name="param">
+              <template #selectionText="{ count }">已选 {{ count }} 个规格属性</template>
+
+              <template #selectionActions>
+                <ElButton @click="handleBatchUnbind('spec')">解绑</ElButton>
+              </template>
+            </CategoryRelationTable>
+          </section>
+
+          <section v-show="activeTab === 'param'">
             <CategoryRelationTable
               :rows="paramRows"
+              :selection-count="selectedParamRows.length"
               @refresh="$emit('refresh')"
               @row-click="handleParamRowClick"
               @selection-change="handleParamSelectionChange"
@@ -135,28 +122,23 @@
               <template #header-left>
                 <div class="flex flex-wrap items-center gap-3">
                   <div class="flex flex-wrap gap-2">
-                    <ElButton @click="openAttributeManager(0)">属性库</ElButton>
-                    <ElButton
-                      type="danger"
-                      plain
-                      :disabled="selectedParamRows.length === 0"
-                      @click="handleBatchUnbind('param')"
-                    >
-                      批量解绑（{{ selectedParamRows.length }}）
-                    </ElButton>
-                    <ElButton type="primary" plain @click="openBindDrawer('param')">
-                      绑定属性
-                    </ElButton>
+                    <ElButton @click="openBindDrawer('param')">绑定属性</ElButton>
                   </div>
                   <div class="text-sm text-[var(--el-text-color-secondary)]">
                     已绑定 {{ paramRows.length }} 个参数属性
                   </div>
                 </div>
               </template>
-            </CategoryRelationTable>
-          </ElTabPane>
 
-          <ElTabPane :label="`品牌 (${brandRows.length})`" name="brand">
+              <template #selectionText="{ count }">已选 {{ count }} 个参数属性</template>
+
+              <template #selectionActions>
+                <ElButton @click="handleBatchUnbind('param')">解绑</ElButton>
+              </template>
+            </CategoryRelationTable>
+          </section>
+
+          <section v-show="activeTab === 'brand'">
             <ElAlert
               v-if="snapshot && !snapshot.isLeaf"
               title="非叶子分类通常只维护模板关系，品牌建议绑定在叶子分类。"
@@ -168,6 +150,7 @@
             <CategoryBrandTable
               :rows="brandRows"
               :loading="brandLoading"
+              :selection-count="selectedBrandRows.length"
               @refresh="$emit('refresh')"
               @selection-change="handleBrandSelectionChange"
               @delete="handleUnbindBrand"
@@ -181,25 +164,23 @@
                     >
                       继承父分类品牌
                     </ElButton>
-                    <ElButton
-                      type="danger"
-                      plain
-                      :disabled="selectedBrandRows.length === 0"
-                      @click="handleBatchUnbindBrands"
-                    >
-                      批量解绑（{{ selectedBrandRows.length }}）
-                    </ElButton>
-                    <ElButton type="primary" plain @click="openBrandBindDrawer">绑定品牌</ElButton>
+                    <ElButton @click="openBrandBindDrawer">绑定品牌</ElButton>
                   </div>
                   <div class="text-sm text-[var(--el-text-color-secondary)]">
                     已绑定 {{ brandRows.length }} 个品牌
                   </div>
                 </div>
               </template>
-            </CategoryBrandTable>
-          </ElTabPane>
 
-          <ElTabPane label="模板复制" name="template">
+              <template #selectionText="{ count }">已选 {{ count }} 个品牌</template>
+
+              <template #selectionActions>
+                <ElButton @click="handleBatchUnbindBrands">解绑</ElButton>
+              </template>
+            </CategoryBrandTable>
+          </section>
+
+          <section v-show="activeTab === 'template'">
             <ElAlert
               title="选择来源分类后，可先预览差异，再决定是否应用到当前分类。"
               type="info"
@@ -223,7 +204,7 @@
                 </ElFormItem>
 
                 <ElFormItem label="复制范围">
-                  <CategorySegmentTabs v-model="templateScope" :options="templateScopeOptions" />
+                  <EaseSegmentTabs v-model="templateScope" :items="templateScopeOptions" />
                 </ElFormItem>
               </ElForm>
 
@@ -235,8 +216,6 @@
                   预览合并
                 </ElButton>
                 <ElButton
-                  type="primary"
-                  plain
                   :disabled="!templateSourceCategoryId"
                   @click="handlePreviewTemplate('replace')"
                 >
@@ -244,8 +223,8 @@
                 </ElButton>
               </div>
             </div>
-          </ElTabPane>
-        </ElTabs>
+          </section>
+        </div>
       </div>
     </ElCard>
 
@@ -379,9 +358,9 @@
             <ElButton class="shrink-0" @click="handleBindSearch">搜索</ElButton>
           </div>
 
-          <CategorySegmentTabs
+          <EaseSegmentTabs
             v-model="bindFilterStatus"
-            :options="bindFilterOptions"
+            :items="bindFilterOptions"
             @change="handleBindFilterStatusChange($event as BindFilterStatus)"
           />
         </div>
@@ -437,9 +416,9 @@
 
             <div class="mt-3">
               <div class="mb-2 text-sm text-[var(--el-text-color-secondary)]">绑定方式</div>
-              <CategorySegmentTabs
+              <EaseSegmentTabs
                 :model-value="bindModeMap[item.id]"
-                :options="bindModeOptions"
+                :items="bindModeOptions"
                 @update:model-value="setBindMode(item.id, $event)"
               />
             </div>
@@ -740,23 +719,16 @@
         </div>
       </template>
     </ElDialog>
-
-    <AttributeManagerDialog
-      v-model="attributeManagerVisible"
-      :preset-type="attributeManagerType"
-      @changed="handleAttributePoolChanged"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-  import AttributeManagerDialog from './attribute-manager-dialog.vue'
+  import ArtTable from '@/components/core/tables/art-table/index.vue'
+  import EaseSegmentTabs from '@/components/project/ease-segment-tabs/index.vue'
   import CategoryBrandTable from './category-brand-table.vue'
   import CategoryRelationTable from './category-relation-table.vue'
-  import CategorySegmentTabs from './category-segment-tabs.vue'
   import OptionTagInput from './option-tag-input.vue'
   import OptionTagPreview from './option-tag-preview.vue'
-  import ArtTable from '@/components/core/tables/art-table/index.vue'
   import {
     bindCategoryAttributesBatch,
     fetchCategoryAttributePool,
@@ -764,7 +736,6 @@
     unbindCategoryAttributeBatch,
     updateCategoryAttributeRelation,
     type CategoryAttributeRelationBatchUnbindPayload,
-    type CategoryAttributeType,
     type CategoryAttributePoolItem
   } from '@/api/category-attribute'
   import {
@@ -867,8 +838,6 @@
   const brandBindKeyword = ref('')
   const brandBindList = ref<BrandListItem[]>([])
   const selectedBrandBindRows = ref<BrandListItem[]>([])
-  const attributeManagerVisible = ref(false)
-  const attributeManagerType = ref<-1 | CategoryAttributeType>(-1)
   const templateSourceOptions = ref<CategoryTreeItem[]>([])
   const templateSourceCategoryId = ref<number | undefined>(undefined)
   const templateScope = ref<TemplateScope>('both')
@@ -1061,6 +1030,13 @@
           left.relation.sort - right.relation.sort || left.relation.id - right.relation.id
       )
   )
+
+  const workbenchTabOptions = computed(() => [
+    { label: '规格', value: 'spec' as const, count: specRows.value.length },
+    { label: '参数', value: 'param' as const, count: paramRows.value.length },
+    { label: '品牌', value: 'brand' as const, count: brandRows.value.length },
+    { label: '模板复制', value: 'template' as const }
+  ])
 
   function getMaxSort(tab: WorkbenchTab) {
     const rows = tab === 'spec' ? specRows.value : paramRows.value
@@ -1571,18 +1547,6 @@
     }
   }
 
-  function openAttributeManager(type: CategoryAttributeType) {
-    attributeManagerType.value = type
-    attributeManagerVisible.value = true
-  }
-
-  async function handleAttributePoolChanged() {
-    if (bindDrawerVisible.value) {
-      await loadBindList()
-    }
-    await loadWorkbenchSnapshot()
-  }
-
   async function loadTemplateSourceOptions() {
     const tree = await fetchCategoryTree()
     templateSourceOptions.value = filterTemplateSourceTree(tree)
@@ -1742,10 +1706,6 @@
     } finally {
       snapshotLoading.value = false
     }
-  }
-
-  async function handleRefresh() {
-    await Promise.all([loadWorkbenchSnapshot(), loadBrandList()])
   }
 
   watch(bindFilteredList, (list) => {

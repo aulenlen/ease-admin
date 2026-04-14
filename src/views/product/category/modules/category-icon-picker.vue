@@ -23,7 +23,7 @@
               placeholder="搜索图标，如 folder / shop / phone"
             />
 
-            <CategorySegmentTabs v-model="activeGroupKey" :options="groupOptions" />
+            <EaseSegmentTabs v-model="activeGroupKey" :items="groupOptions" />
 
             <ElScrollbar max-height="320px">
               <div class="grid grid-cols-5 gap-2 max-md:grid-cols-4">
@@ -62,8 +62,8 @@
 
 <script setup lang="ts">
   import ArtSvgIcon from '@/components/core/base/art-svg-icon/index.vue'
+  import EaseSegmentTabs from '@/components/project/ease-segment-tabs/index.vue'
   import { riIconGroups, riIconList } from '@/config/ri-icon-catalog'
-  import CategorySegmentTabs from './category-segment-tabs.vue'
   import { useWindowSize } from '@vueuse/core'
 
   interface Props {

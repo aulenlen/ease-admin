@@ -87,17 +87,29 @@
           <div class="flex items-center justify-center gap-1.5">
             <ElTooltip content="查看日志" placement="top">
               <span class="inline-flex">
-                <ArtButtonTable type="view" @click="$emit('log', row)" />
+                <ArtButtonTable
+                  type="view"
+                  icon-class="ease-table-action ease-table-action--view"
+                  @click="$emit('log', row)"
+                />
               </span>
             </ElTooltip>
             <ElTooltip content="保存库存" placement="top">
               <span class="inline-flex">
-                <ArtButtonTable type="edit" @click="$emit('save', row)" />
+                <ArtButtonTable
+                  type="edit"
+                  icon-class="ease-table-action ease-table-action--edit"
+                  @click="$emit('save', row)"
+                />
               </span>
             </ElTooltip>
             <ElTooltip content="删除库存" placement="top">
               <span class="inline-flex">
-                <ArtButtonTable type="delete" @click="$emit('delete', row)" />
+                <ArtButtonTable
+                  type="delete"
+                  icon-class="ease-table-action ease-table-action--delete"
+                  @click="$emit('delete', row)"
+                />
               </span>
             </ElTooltip>
           </div>
@@ -168,7 +180,7 @@
   }
 
   .inventory-expand__list :deep(.art-table-btn),
-  .inventory-expand__list :deep(.art-button-table) {
+  .inventory-expand__list :deep(.ease-table-action) {
     min-width: 28px;
     height: 28px;
   }

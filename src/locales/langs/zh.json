@@ -263,6 +263,7 @@
     "product": {
       "title": "商品管理",
       "category": "分类管理",
+      "attribute": "属性库",
       "brand": "品牌管理",
       "brandCreate": "新增品牌",
       "brandEdit": "编辑品牌"

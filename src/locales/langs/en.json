@@ -263,6 +263,7 @@
     "product": {
       "title": "Product",
       "category": "Category",
+      "attribute": "Attribute Library",
       "brand": "Brand",
       "brandCreate": "Create Brand",
       "brandEdit": "Edit Brand"
