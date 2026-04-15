@@ -31,31 +31,6 @@
     var(--art-card-border) 92%,
     var(--default-box-color)
   );
-  --ease-shell-button-bg: color-mix(
-    in srgb,
-    var(--el-fill-color-light) 72%,
-    var(--default-box-color)
-  );
-  --ease-shell-button-hover-bg: color-mix(
-    in srgb,
-    var(--el-fill-color) 78%,
-    var(--default-box-color)
-  );
-  --ease-shell-button-border: color-mix(
-    in srgb,
-    var(--art-card-border) 94%,
-    var(--default-box-color)
-  );
-  --ease-shell-button-primary-plain-bg: color-mix(
-    in srgb,
-    var(--theme-color) 3%,
-    var(--default-box-color)
-  );
-  --ease-shell-button-primary-plain-hover-bg: color-mix(
-    in srgb,
-    var(--theme-color) 7%,
-    var(--default-box-color)
-  );
 }
 
 html.dark {
@@ -91,31 +66,6 @@ html.dark {
   --ease-table-action-hover-border: color-mix(
     in srgb,
     var(--art-card-border) 80%,
-    var(--default-box-color)
-  );
-  --ease-shell-button-bg: color-mix(
-    in srgb,
-    var(--el-fill-color-light) 34%,
-    var(--default-box-color)
-  );
-  --ease-shell-button-hover-bg: color-mix(
-    in srgb,
-    var(--el-fill-color) 42%,
-    var(--default-box-color)
-  );
-  --ease-shell-button-border: color-mix(
-    in srgb,
-    var(--art-card-border) 86%,
-    var(--default-box-color)
-  );
-  --ease-shell-button-primary-plain-bg: color-mix(
-    in srgb,
-    var(--theme-color) 8%,
-    var(--default-box-color)
-  );
-  --ease-shell-button-primary-plain-hover-bg: color-mix(
-    in srgb,
-    var(--theme-color) 14%,
     var(--default-box-color)
   );
 }

@@ -1,22 +1,19 @@
 <template>
-  <ElDrawer
+  <ElDialog
     v-model="visible"
-    :title="dialogType === 'add' ? '新增分类' : '编辑分类'"
-    :size="drawerSize"
-    direction="rtl"
+    :title="dialogTitle"
+    :width="dialogWidth"
+    top="6vh"
     destroy-on-close
-    class="category-editor-drawer"
     @closed="handleClosed"
   >
-    <div class="flex h-full flex-col">
-      <div v-loading="loading" class="flex-1 overflow-auto pr-2.5">
-        <ElForm
-          ref="formRef"
-          :model="formData"
-          :rules="rules"
-          label-position="top"
-          class="category-editor-form"
-        >
+    <div v-loading="loading" class="max-h-[72vh] overflow-y-auto pr-1">
+      <ElForm ref="formRef" :model="formData" :rules="rules" label-position="top" class="space-y-3">
+        <ElCard shadow="never" class="art-card-xs">
+          <template #header>
+            <span class="font-medium">基础信息</span>
+          </template>
+
           <ElFormItem label="上级分类" prop="parentId">
             <ElTreeSelect
               v-model="formData.parentId"
@@ -38,66 +35,84 @@
             />
           </ElFormItem>
 
-          <ElFormItem label="启用状态">
-            <ElSwitch v-model="enableStatusValue" />
-          </ElFormItem>
+          <ElRow :gutter="16">
+            <ElCol :xs="24" :md="8">
+              <ElFormItem label="启用状态">
+                <ElSwitch v-model="enableStatusValue" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :xs="24" :md="8">
+              <ElFormItem label="导航显示">
+                <ElSwitch v-model="navStatusValue" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :xs="24" :md="8">
+              <ElFormItem label="排序">
+                <ElInputNumber
+                  v-model="formData.sort"
+                  :min="0"
+                  :max="999"
+                  controls-position="right"
+                  class="w-full"
+                />
+              </ElFormItem>
+            </ElCol>
+          </ElRow>
+        </ElCard>
 
-          <ElFormItem label="导航显示">
-            <ElSwitch v-model="navStatusValue" />
-          </ElFormItem>
+        <ElCard shadow="never" class="art-card-xs">
+          <template #header>
+            <span class="font-medium">展示与 SEO</span>
+          </template>
 
-          <ElFormItem label="排序">
-            <ElInputNumber
-              v-model="formData.sort"
-              :min="0"
-              :max="999"
-              controls-position="right"
-              class="w-full"
-            />
-          </ElFormItem>
+          <ElRow :gutter="16">
+            <ElCol :xs="24" :md="12">
+              <ElFormItem label="图标">
+                <CategoryIconPicker v-model="formData.icon" />
+              </ElFormItem>
 
-          <ElFormItem label="分类图标">
-            <CategoryIconPicker v-model="formData.icon" />
-          </ElFormItem>
+              <ElFormItem label="图片地址" class="mb-0">
+                <ElInput
+                  v-model.trim="formData.image"
+                  placeholder="请输入分类图片地址"
+                  class="w-full"
+                />
+              </ElFormItem>
+            </ElCol>
 
-          <ElFormItem label="图片地址">
-            <ElInput
-              v-model.trim="formData.image"
-              placeholder="请输入分类图片地址"
-              class="w-full"
-            />
-          </ElFormItem>
+            <ElCol :xs="24" :md="12">
+              <ElFormItem label="关键词">
+                <ElInput
+                  v-model.trim="formData.keywords"
+                  placeholder="请输入 SEO 关键词"
+                  class="w-full"
+                />
+              </ElFormItem>
 
-          <ElFormItem label="关键词">
-            <ElInput
-              v-model.trim="formData.keywords"
-              placeholder="请输入 SEO 关键词"
-              class="w-full"
-            />
-          </ElFormItem>
+              <ElFormItem label="描述" class="mb-0">
+                <ElInput
+                  v-model.trim="formData.description"
+                  type="textarea"
+                  :rows="4"
+                  maxlength="500"
+                  show-word-limit
+                  placeholder="请输入分类描述"
+                  class="w-full"
+                />
+              </ElFormItem>
+            </ElCol>
+          </ElRow>
+        </ElCard>
+      </ElForm>
+    </div>
 
-          <ElFormItem label="描述">
-            <ElInput
-              v-model.trim="formData.description"
-              type="textarea"
-              :rows="4"
-              maxlength="500"
-              show-word-limit
-              placeholder="请输入分类描述"
-              class="w-full"
-            />
-          </ElFormItem>
-        </ElForm>
-      </div>
-
-      <div
-        class="mt-3 flex items-center justify-end gap-2 border-t border-[var(--el-border-color-lighter)] pt-3 pr-1"
-      >
+    <template #footer>
+      <div class="flex items-center justify-end gap-2">
         <ElButton @click="visible = false">取消</ElButton>
         <ElButton type="primary" :loading="submitting" @click="handleSubmit">提交</ElButton>
       </div>
-    </div>
-  </ElDrawer>
+    </template>
+  </ElDialog>
 </template>
 
 <script setup lang="ts">
@@ -142,7 +157,8 @@
   const formRef = ref<FormInstance>()
   const loading = ref(false)
   const submitting = ref(false)
-  const drawerSize = computed(() => (width.value < 768 ? '100%' : '680px'))
+  const dialogTitle = computed(() => (props.dialogType === 'add' ? '新增分类' : '编辑分类'))
+  const dialogWidth = computed(() => (width.value < 768 ? 'calc(100vw - 24px)' : '860px'))
 
   const defaultFormData: CategorySavePayload = {
     id: undefined,
@@ -272,19 +288,3 @@
     { immediate: true }
   )
 </script>
-
-<style scoped lang="scss">
-  :deep(.category-editor-drawer .el-drawer__body) {
-    overflow: hidden;
-  }
-
-  .category-editor-form {
-    :deep(.el-form-item) {
-      margin-bottom: 14px;
-    }
-
-    :deep(.el-form-item:last-child) {
-      margin-bottom: 0;
-    }
-  }
-</style>

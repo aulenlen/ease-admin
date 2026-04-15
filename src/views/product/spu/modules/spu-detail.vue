@@ -1,151 +1,124 @@
 <template>
   <div class="flex flex-col gap-4" v-loading="loading">
-    <ElCard shadow="never" class="art-card-xs spu-detail-page__topbar">
-      <div class="flex items-center justify-between gap-4 max-md:items-start max-md:flex-col">
-        <div>
-          <div class="text-lg font-semibold text-[var(--el-text-color-primary)]">{{
-            pageTitle
-          }}</div>
-          <div
-            class="mt-1.5 flex flex-wrap gap-x-3.5 gap-y-2 text-xs text-[var(--el-text-color-secondary)]"
-          >
-            <span>{{ isEdit ? `商品ID：${form.id}` : '新建商品' }}</span>
-            <span>分类：{{ form.categoryId ? form.categoryId : '未选择' }}</span>
-            <span>状态：{{ Number(form.publishStatus ?? 0) === 1 ? '已上架' : '未上架' }}</span>
-          </div>
-        </div>
+    <div class="flex items-center gap-3">
+      <ArtIconButton icon="ri:arrow-left-line" @click="router.push('/product/spu')" />
+    </div>
 
-        <div class="flex shrink-0 flex-wrap gap-3 max-md:w-full">
-          <ElButton @click="router.push('/product/spu')">返回列表</ElButton>
-          <ElButton @click="handleReset">重置</ElButton>
-          <ElButton type="primary" :loading="saving" @click="handleSubmit">保存商品</ElButton>
-        </div>
-      </div>
-    </ElCard>
-
-    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <ElForm
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-position="top"
+      class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]"
+    >
       <div class="space-y-4">
-        <ElCard shadow="never" class="art-card-xs">
+        <ElCard class="art-card" shadow="never">
           <template #header>
-            <div class="flex items-center justify-between gap-4">
-              <span class="font-medium">商品编辑</span>
-              <ElTabs v-model="activeTab" class="spu-detail-page__tabs">
-                <ElTabPane label="基础信息" name="core" />
-                <ElTabPane label="规格与价格" name="sku" />
-              </ElTabs>
+            <div>
+              <div class="text-base font-semibold text-[var(--el-text-color-primary)]"
+                >商品信息</div
+              >
             </div>
           </template>
 
-          <ElForm
-            v-show="activeTab === 'core'"
-            ref="formRef"
-            :model="form"
-            :rules="rules"
-            label-position="top"
-          >
-            <ElRow :gutter="16">
-              <ElCol :xs="24" :md="12">
-                <ElFormItem label="品牌" prop="brandId">
-                  <ElSelect v-model="form.brandId" filterable clearable class="w-full">
-                    <ElOption
-                      v-for="item in brandOptions"
-                      :key="item.id"
-                      :label="item.name"
-                      :value="item.id"
-                    />
-                  </ElSelect>
-                </ElFormItem>
-              </ElCol>
-              <ElCol :xs="24" :md="12">
-                <ElFormItem label="分类" prop="categoryId">
-                  <ElCascader
-                    v-model="categoryPath"
-                    :options="categoryOptions"
-                    clearable
-                    filterable
-                    class="w-full"
-                    :props="cascaderProps"
-                    @change="handleCategoryChange"
-                  />
-                </ElFormItem>
-              </ElCol>
-            </ElRow>
-
-            <ElRow :gutter="16">
-              <ElCol :xs="24" :md="16">
-                <ElFormItem label="商品名称" prop="name">
-                  <ElInput v-model.trim="form.name" maxlength="200" show-word-limit />
-                </ElFormItem>
-              </ElCol>
-              <ElCol :xs="24" :md="8">
-                <ElFormItem label="排序">
-                  <ElInputNumber v-model="form.sort" :min="0" :precision="0" class="w-full" />
-                </ElFormItem>
-              </ElCol>
-            </ElRow>
-
-            <ElFormItem label="副标题">
-              <ElInput v-model.trim="form.subTitle" maxlength="255" show-word-limit />
+          <div class="space-y-4">
+            <ElFormItem label="商品名称" prop="name">
+              <ElInput
+                v-model.trim="form.name"
+                maxlength="100"
+                show-word-limit
+                placeholder="请输入商品名称"
+              />
             </ElFormItem>
 
-            <ElRow :gutter="16">
-              <ElCol :xs="24" :md="12">
-                <ElFormItem label="关键词" prop="keywords">
-                  <ElInput v-model.trim="form.keywords" maxlength="255" show-word-limit />
-                </ElFormItem>
-              </ElCol>
-              <ElCol :xs="24" :md="6">
-                <ElFormItem label="单位">
-                  <ElInput v-model.trim="form.unit" maxlength="16" />
-                </ElFormItem>
-              </ElCol>
-              <ElCol :xs="24" :md="6">
-                <ElFormItem label="重量(克)">
-                  <ElInputNumber
-                    v-model="form.weight"
-                    :min="0"
-                    :precision="2"
-                    controls-position="right"
-                    class="w-full"
-                  />
-                </ElFormItem>
-              </ElCol>
-            </ElRow>
+            <ElFormItem label="副标题">
+              <ElInput
+                v-model.trim="form.subTitle"
+                maxlength="150"
+                show-word-limit
+                placeholder="请输入副标题"
+              />
+            </ElFormItem>
+
+            <ElFormItem label="关键词" prop="keywords">
+              <ElInput
+                v-model.trim="form.keywords"
+                maxlength="150"
+                show-word-limit
+                placeholder="请输入关键词，多个关键词可用逗号分隔"
+              />
+            </ElFormItem>
+
+            <ElFormItem label="单位">
+              <ElInput v-model.trim="form.unit" maxlength="20" placeholder="例如：件、盒、台" />
+            </ElFormItem>
+
+            <ElFormItem label="重量（kg）">
+              <ElInputNumber
+                v-model="form.weight"
+                :min="0"
+                :precision="2"
+                class="w-full !max-w-none"
+              />
+            </ElFormItem>
+
+            <ElFormItem label="排序">
+              <ElInputNumber
+                v-model="form.sort"
+                :min="0"
+                :precision="0"
+                class="w-full !max-w-none"
+              />
+            </ElFormItem>
 
             <ElFormItem label="商品描述" prop="description">
               <ElInput
                 v-model.trim="form.description"
                 type="textarea"
-                :autosize="{ minRows: 3, maxRows: 5 }"
-                maxlength="500"
+                :rows="4"
+                maxlength="300"
                 show-word-limit
+                placeholder="请输入商品描述"
               />
             </ElFormItem>
 
-            <div class="flex flex-wrap items-center gap-3">
-              <ElTag effect="plain">发布状态</ElTag>
-              <ElSwitch
-                :model-value="Number(form.publishStatus ?? 0) === 1"
-                @update:model-value="form.publishStatus = $event ? 1 : 0"
-              />
-              <ElTag effect="plain">推荐</ElTag>
-              <ElSwitch
-                :model-value="Number(form.recommendStatus ?? 0) === 1"
-                @update:model-value="form.recommendStatus = $event ? 1 : 0"
-              />
-            </div>
+            <ElFormItem label="商品详情">
+              <ArtWangEditor v-model="form.detailHtml" height="360px" />
+            </ElFormItem>
+          </div>
+        </ElCard>
 
-            <ElDivider />
-
-            <section class="pt-0.5">
-              <div class="mb-2.5 text-sm font-semibold text-[var(--el-text-color-primary)]"
-                >商品参数</div
+        <ElCard class="art-card" shadow="never">
+          <template #header>
+            <div>
+              <div class="text-base font-semibold text-[var(--el-text-color-primary)]"
+                >商品图片与参数</div
               >
-              <ElEmpty v-if="!form.categoryId" description="先选择商品分类，再填写参数" />
-              <ElEmpty v-else-if="!paramDefs.length" description="当前分类未配置参数" />
-              <ElRow v-else :gutter="16">
-                <ElCol v-for="item in paramDefs" :key="item.attrId" :xs="24" :md="12">
-                  <ElFormItem :label="item.attrName">
+            </div>
+          </template>
+
+          <div class="space-y-4">
+            <ElFormItem label="商品参数">
+              <div
+                class="w-full rounded-xl border border-dashed border-[var(--el-border-color)] p-4"
+              >
+                <ElEmpty
+                  v-if="!form.categoryId"
+                  description="请先在右侧选择商品分类"
+                  :image-size="60"
+                />
+                <ElEmpty
+                  v-else-if="!paramDefs.length"
+                  description="当前分类未配置商品参数"
+                  :image-size="60"
+                />
+                <div v-else class="space-y-4">
+                  <ElFormItem
+                    v-for="item in paramDefs"
+                    :key="item.attrId"
+                    :label="item.attrName"
+                    class="mb-0"
+                  >
                     <ElSelect
                       v-if="item.optionList.length"
                       v-model="paramValueMap[item.attrId]"
@@ -162,183 +135,270 @@
                         :value="option"
                       />
                     </ElSelect>
-                    <ElInput v-else v-model.trim="paramValueMap[item.attrId]" />
-                  </ElFormItem>
-                </ElCol>
-              </ElRow>
-            </section>
-
-            <ElDivider />
-
-            <section class="pt-0.5">
-              <div class="mb-2.5 text-sm font-semibold text-[var(--el-text-color-primary)]"
-                >商品详情</div
-              >
-              <ArtWangEditor v-model="form.detailMobileHtml" height="360px" />
-            </section>
-          </ElForm>
-
-          <div v-show="activeTab === 'sku'" class="space-y-4">
-            <section class="pt-0.5">
-              <div class="mb-2.5 text-sm font-semibold text-[var(--el-text-color-primary)]"
-                >规格配置</div
-              >
-              <ElEmpty v-if="!form.categoryId" description="先选择商品分类，再配置规格" />
-              <ElEmpty v-else-if="!specDefs.length" description="当前分类未配置规格" />
-              <div v-else class="space-y-4">
-                <ElCard
-                  v-for="item in specDefs"
-                  :key="item.attrId"
-                  shadow="never"
-                  class="border-dashed"
-                >
-                  <div class="flex items-center justify-between gap-4">
-                    <div class="font-medium">{{ item.attrName }}</div>
-                    <div class="text-xs text-g-500">至少选 1 个值后会自动生成 SKU</div>
-                  </div>
-                  <ElCheckboxGroup
-                    v-model="specSelectionMap[item.attrId]"
-                    class="mt-3 flex flex-wrap gap-3"
-                    @change="handleSpecSelectionChange"
-                  >
-                    <ElCheckbox
-                      v-for="option in item.optionList"
-                      :key="option"
-                      :label="option"
-                      :value="option"
+                    <ElInput
+                      v-else
+                      v-model.trim="paramValueMap[item.attrId]"
+                      placeholder="请输入参数值"
                     />
-                  </ElCheckboxGroup>
-                </ElCard>
+                  </ElFormItem>
+                </div>
+              </div>
+            </ElFormItem>
+
+            <ElFormItem label="商品主图">
+              <SpuImageUploader
+                v-model="mainPicList"
+                :limit="1"
+                tip="建议上传 1 张主图，用于列表与详情展示"
+              />
+            </ElFormItem>
+
+            <ElFormItem label="轮播图">
+              <SpuImageUploader
+                v-model="albumPicList"
+                :limit="8"
+                multiple
+                tip="最多上传 8 张轮播图，建议保持统一尺寸"
+              />
+            </ElFormItem>
+          </div>
+        </ElCard>
+
+        <ElCard ref="skuSectionRef" class="art-card spu-detail-page__sku-card" shadow="never">
+          <template #header>
+            <div>
+              <div class="text-base font-semibold text-[var(--el-text-color-primary)]"
+                >多规格与库存</div
+              >
+            </div>
+          </template>
+
+          <div class="space-y-6">
+            <section class="space-y-4">
+              <ElEmpty
+                v-if="!form.categoryId"
+                description="先选择商品分类，再配置规格"
+                :image-size="60"
+              />
+              <div v-else class="space-y-4">
+                <ElAlert
+                  v-if="!specDefs.length"
+                  type="info"
+                  show-icon
+                  :closable="false"
+                  title="当前分类未配置预设规格，可直接新增自定义规格。"
+                />
+
+                <div
+                  v-if="specDefs.length || customSpecs.length"
+                  class="divide-y divide-[var(--art-card-border)]"
+                >
+                  <SpecTagSelector
+                    v-for="item in specDefs"
+                    :key="item.attrId"
+                    :attr-name="item.attrName"
+                    :attr-id="item.attrId"
+                    :preset-options="item.optionList"
+                    v-model="specSelectionMap[item.attrId]"
+                    @change="handleSpecSelectionChange"
+                  />
+
+                  <SpecTagSelector
+                    v-for="item in customSpecs"
+                    :key="item.tempId"
+                    :attr-name="item.attrName"
+                    :preset-options="[]"
+                    v-model="item.values"
+                    editable
+                    @update:attr-name="item.attrName = $event"
+                    @remove="removeCustomSpec(item.tempId)"
+                    @change="handleSpecSelectionChange"
+                  />
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <ElButton type="primary" plain @click="addCustomSpec">添加规格</ElButton>
+                </div>
               </div>
             </section>
 
-            <section class="pt-0.5">
-              <div class="mb-2.5 text-sm font-semibold text-[var(--el-text-color-primary)]"
-                >SKU 与价格</div
-              >
-              <ElAlert
-                v-if="hasSpecSelection"
-                type="info"
-                show-icon
-                :closable="false"
-                :title="`已按规格生成 ${form.skuStockList.length} 个 SKU`"
+            <ElDivider class="!my-0" />
+
+            <section class="space-y-4">
+              <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div class="space-y-1">
+                  <div class="font-medium text-[var(--el-text-color-primary)]">价格与库存</div>
+                </div>
+              </div>
+
+              <ElEmpty
+                v-if="!form.categoryId"
+                description="请先在右侧选择商品分类，再配置价格与库存"
+                :image-size="60"
               />
+              <ElEmpty
+                v-else-if="!hasSpecSelection"
+                description="请先选择规格，再配置价格与库存"
+                :image-size="60"
+              />
+              <template v-else>
+                <ElAlert
+                  type="info"
+                  show-icon
+                  :closable="false"
+                  :title="`${form.skuStockList.length} 个 SKU`"
+                  description=""
+                />
 
-              <ElForm v-if="!hasSpecSelection" label-position="top" class="mt-4">
-                <ElRow :gutter="16">
-                  <ElCol :xs="24" :md="12">
-                    <ElFormItem label="售价">
-                      <ElInputNumber
-                        v-model="singleSku.price"
-                        :min="0"
-                        :precision="2"
-                        controls-position="right"
-                        class="w-full"
-                      />
-                    </ElFormItem>
-                  </ElCol>
-                  <ElCol :xs="24" :md="12">
-                    <ElFormItem label="市场价">
-                      <ElInputNumber
-                        v-model="singleSku.originalPrice"
-                        :min="0"
-                        :precision="2"
-                        controls-position="right"
-                        class="w-full"
-                      />
-                    </ElFormItem>
-                  </ElCol>
-                </ElRow>
-                <ElRow :gutter="16">
-                  <ElCol :xs="24" :md="12">
-                    <ElFormItem label="库存">
-                      <ElInputNumber
-                        v-model="singleSku.stock"
-                        :min="0"
-                        :precision="0"
-                        controls-position="right"
-                        class="w-full"
-                      />
-                    </ElFormItem>
-                  </ElCol>
-                  <ElCol :xs="24" :md="12">
-                    <ElFormItem label="低库存预警">
-                      <ElInputNumber
-                        v-model="singleSku.lowStock"
-                        :min="0"
-                        :precision="0"
-                        controls-position="right"
-                        class="w-full"
-                      />
-                    </ElFormItem>
-                  </ElCol>
-                </ElRow>
-              </ElForm>
-
-              <SpuSkuEditor v-else v-model="form.skuStockList" class="mt-4" />
+                <SpuSkuEditor v-model="form.skuStockList" class="mt-4" />
+              </template>
             </section>
           </div>
         </ElCard>
       </div>
 
       <div class="space-y-4">
-        <ElCard shadow="never" class="art-card-xs">
+        <ElCard class="art-card" shadow="never">
           <template #header>
-            <span class="font-medium">图片素材</span>
+            <div>
+              <div class="text-base font-semibold text-[var(--el-text-color-primary)]"
+                >商品设置</div
+              >
+            </div>
           </template>
 
           <div class="space-y-4">
-            <div class="pb-0.5">
-              <div class="mb-2 text-sm font-medium">商品主图</div>
-              <SpuImageUploader v-model="mainPicList" :limit="1" tip="建议上传 1:1 主图" />
-            </div>
-            <div class="pb-0.5">
-              <div class="mb-2 text-sm font-medium">轮播图</div>
-              <SpuImageUploader
-                v-model="form.albumPics"
-                :limit="5"
-                :multiple="true"
-                tip="建议上传 3-5 张轮播图"
+            <ElFormItem label="上架商品">
+              <ElSwitch v-model="form.publishStatus" :active-value="1" :inactive-value="0" />
+            </ElFormItem>
+
+            <ElFormItem label="推荐商品">
+              <ElSwitch v-model="form.recommendStatus" :active-value="1" :inactive-value="0" />
+            </ElFormItem>
+
+            <ElFormItem label="品牌" prop="brandId">
+              <ElSelect
+                v-model="form.brandId"
+                filterable
+                clearable
+                class="w-full"
+                placeholder="请选择品牌"
+              >
+                <ElOption
+                  v-for="item in brandOptions"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
+                />
+              </ElSelect>
+            </ElFormItem>
+
+            <ElFormItem label="分类" prop="categoryId">
+              <ElCascader
+                ref="cascaderRef"
+                v-model="categoryPath"
+                :options="categoryOptions"
+                :props="cascaderProps"
+                clearable
+                filterable
+                class="w-full"
+                placeholder="请选择分类"
+                @change="handleCategoryChange"
               />
-            </div>
+            </ElFormItem>
           </div>
         </ElCard>
 
-        <ElCard shadow="never" class="art-card-xs">
+        <ElCard class="art-card" shadow="never">
           <template #header>
-            <span class="font-medium">提交检查</span>
+            <div class="text-base font-semibold text-[var(--el-text-color-primary)]">商品概览</div>
           </template>
 
-          <div class="space-y-3 text-sm">
-            <div class="flex items-center justify-between">
-              <span>基础信息</span>
-              <ElTag :type="form.brandId && form.categoryId && form.name ? 'success' : 'danger'">
-                {{ form.brandId && form.categoryId && form.name ? '已完成' : '待完善' }}
-              </ElTag>
+          <div class="space-y-4 text-sm">
+            <div class="flex items-start justify-between gap-4">
+              <span class="text-[var(--el-text-color-secondary)]">品牌</span>
+              <span class="text-right text-[var(--el-text-color-primary)]">
+                {{ selectedBrandName || '未选择' }}
+              </span>
             </div>
-            <div class="flex items-center justify-between">
-              <span>图片素材</span>
-              <ElTag :type="form.pic ? 'success' : 'danger'">
-                {{ form.pic ? '已完成' : '待完善' }}
-              </ElTag>
+            <div class="flex items-start justify-between gap-4">
+              <span class="text-[var(--el-text-color-secondary)]">分类</span>
+              <span class="text-right text-[var(--el-text-color-primary)]">
+                {{ selectedCategoryText || '未选择' }}
+              </span>
             </div>
-            <div class="flex items-center justify-between">
-              <span>SKU 价格</span>
-              <ElTag :type="hasValidSkuPrice ? 'success' : 'danger'">
-                {{ hasValidSkuPrice ? '已完成' : '待完善' }}
-              </ElTag>
+            <div class="flex items-start justify-between gap-4">
+              <span class="text-[var(--el-text-color-secondary)]">SPU 编码</span>
+              <span class="text-right text-[var(--el-text-color-primary)]">
+                {{ form.spuCode || '自动生成' }}
+              </span>
             </div>
-            <div class="rounded-md bg-g-100 p-3 text-xs text-g-600">
-              缺失项 {{ requiredMissingCount }} 个。先把主提交流和布局骨架跑通，再逐步补增强能力。
+            <div class="flex items-start justify-between gap-4">
+              <span class="text-[var(--el-text-color-secondary)]">SKU 数量</span>
+              <span class="text-right text-[var(--el-text-color-primary)]">
+                {{ form.skuStockList.length }}
+              </span>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+              <span class="text-[var(--el-text-color-secondary)]">关键词</span>
+              <span class="text-right text-[var(--el-text-color-primary)]">
+                {{ form.keywords || '未填写' }}
+              </span>
             </div>
           </div>
         </ElCard>
+
+        <ElCard class="art-card" shadow="never">
+          <template #header>
+            <div class="text-base font-semibold text-[var(--el-text-color-primary)]">提交检查</div>
+          </template>
+
+          <div class="space-y-3">
+            <div
+              v-for="item in submitChecks"
+              :key="item.label"
+              class="flex items-center justify-between rounded-lg border border-[var(--el-border-color-light)] px-3 py-2"
+            >
+              <span class="text-sm text-[var(--el-text-color-secondary)]">{{ item.label }}</span>
+              <ElTag :type="item.done ? 'success' : 'warning'" effect="light">
+                {{ item.done ? '已完成' : '待完善' }}
+              </ElTag>
+            </div>
+
+            <ElAlert
+              :title="
+                requiredMissingCount
+                  ? `还有 ${requiredMissingCount} 项核心内容待完善`
+                  : '核心内容已完整，可直接提交'
+              "
+              :type="requiredMissingCount ? 'warning' : 'success'"
+              :closable="false"
+              show-icon
+            />
+          </div>
+        </ElCard>
+      </div>
+    </ElForm>
+
+    <div class="mt-4 border-t border-[var(--el-border-color-light)] px-5 py-3">
+      <div class="flex items-center justify-end gap-3">
+        <ElButton @click="handleReset">重置</ElButton>
+        <ElButton type="primary" :loading="saving" @click="handleSubmit">保存商品</ElButton>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+  import type { CascaderValue, FormInstance, FormRules } from 'element-plus'
+  import { fetchBrandPage, type BrandListItem } from '@/api/brand'
+  import { fetchCategoryTree, type CategoryTreeItem } from '@/api/category'
+  import { createCategoryAttribute, bindCategoryAttributesBatch } from '@/api/category-attribute'
+  import {
+    fetchCategoryParams,
+    fetchCategorySpecs,
+    type CategoryAttributeRelationItem
+  } from '@/api/category-attribute'
   import {
     createSpu,
     getSpu,
@@ -348,98 +408,106 @@
     type SpuFormSkuItem,
     type SpuSavePayload
   } from '@/api/spu'
-  import { fetchBrandPage, type BrandListItem } from '@/api/brand'
-  import { fetchCategoryTree, type CategoryTreeItem } from '@/api/category'
-  import {
-    fetchCategoryParams,
-    fetchCategorySpecs,
-    type CategoryAttributeRelationItem
-  } from '@/api/category-attribute'
+  import ArtIconButton from '@/components/core/widget/art-icon-button/index.vue'
   import ArtWangEditor from '@/components/core/forms/art-wang-editor/index.vue'
-  import type { FormInstance, FormRules } from 'element-plus'
-  import { markSpuListDirty } from './spu-list-cache'
   import SpuImageUploader from './spu-image-uploader.vue'
   import SpuSkuEditor from './spu-sku-editor.vue'
+  import SpecTagSelector from './spec-tag-selector.vue'
+  import { markSpuListDirty } from './spu-list-cache'
 
-  interface Props {
-    mode: 'create' | 'edit'
-  }
-
-  interface SpuFormState extends Partial<SpuDetailItem> {
+  interface SpuFormState {
     id?: number
     brandId?: number
     categoryId?: number
     name: string
-    description: string
-    keywords: string
     subTitle: string
-    pic: string
-    albumPics: string[]
+    keywords: string
+    description: string
+    detailHtml: string
     unit: string
-    weight: number
+    weight?: number
     sort: number
     publishStatus: 0 | 1
     recommendStatus: 0 | 1
-    detailMobileHtml: string
+    pic: string
+    albumPics: string[]
+    spuCode: string
+    attrValueList: AttrValueItem[]
     skuStockList: SpuFormSkuItem[]
   }
 
-  const props = defineProps<Props>()
+  defineOptions({ name: 'ProductSpuDetailPage' })
 
   const router = useRouter()
   const route = useRoute()
-  const isEdit = computed(() => props.mode === 'edit')
-  const pageTitle = computed(() => (isEdit.value ? '编辑商品' : '新增商品'))
+  const isEdit = computed(() => Boolean(route.params.id))
 
   const loading = ref(false)
   const saving = ref(false)
-  const activeTab = ref<'core' | 'sku'>('core')
   const formRef = ref<FormInstance>()
-
+  const skuSectionRef = ref()
+  const cascaderRef = ref()
   const brandOptions = ref<BrandListItem[]>([])
-  const categoryTree = ref<CategoryTreeItem[]>([])
+  const categoryOptions = ref<CategoryTreeItem[]>([])
   const paramDefs = ref<CategoryAttributeRelationItem[]>([])
   const specDefs = ref<CategoryAttributeRelationItem[]>([])
   const categoryPath = ref<number[]>([])
   const paramValueMap = reactive<Record<number, string>>({})
   const specSelectionMap = reactive<Record<number, string[]>>({})
+
+  interface CustomSpecItem {
+    tempId: number
+    attrName: string
+    values: string[]
+  }
+
+  let nextTempId = -1
+  const customSpecs = ref<CustomSpecItem[]>([])
+
   const cascaderProps = {
-    checkStrictly: true,
+    label: 'name',
+    value: 'id',
+    children: 'children',
     emitPath: true,
-    value: 'value',
-    label: 'label',
-    children: 'children'
+    checkStrictly: true,
+    showPrefix: false
   }
 
   const createDefaultSku = (): SpuFormSkuItem => ({
+    skuCode: '',
+    pic: '',
     price: 0,
     originalPrice: 0,
     stock: 0,
     lowStock: 0,
-    enableStatus: 1,
-    spData: '[]'
+    spData: '[]',
+    enableStatus: 1
   })
 
   const createDefaultForm = (): SpuFormState => ({
+    id: undefined,
+    brandId: undefined,
+    categoryId: undefined,
     name: '',
-    description: '',
-    keywords: '',
     subTitle: '',
+    keywords: '',
+    description: '',
+    detailHtml: '',
+    unit: '',
+    weight: undefined,
+    sort: 0,
+    publishStatus: 1,
+    recommendStatus: 0,
     pic: '',
     albumPics: [],
-    unit: '',
-    weight: 0,
-    sort: 0,
-    publishStatus: 0,
-    recommendStatus: 0,
-    detailMobileHtml: '',
+    spuCode: '',
+    attrValueList: [],
     skuStockList: [createDefaultSku()]
   })
 
   const form = reactive<SpuFormState>(createDefaultForm())
-  const initialSnapshot = ref<SpuFormState>(createDefaultForm())
 
-  const rules: FormRules<SpuFormState> = {
+  const rules: FormRules = {
     brandId: [{ required: true, message: '请选择品牌', trigger: 'change' }],
     categoryId: [{ required: true, message: '请选择分类', trigger: 'change' }],
     name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
@@ -447,56 +515,96 @@
     description: [{ required: true, message: '请输入商品描述', trigger: 'blur' }]
   }
 
-  const categoryOptions = computed(() => {
-    const walk = (items: CategoryTreeItem[]): any[] =>
-      items.map((item) => ({
-        label: item.name,
-        value: item.id,
-        children: item.children?.length ? walk(item.children) : undefined
-      }))
-
-    return walk(categoryTree.value)
-  })
-
-  const mainPicList = computed({
+  const mainPicList = computed<string[]>({
     get: () => (form.pic ? [form.pic] : []),
-    set: (value: string[]) => {
-      form.pic = value?.[0] || ''
+    set: (value) => {
+      form.pic = value[0] || ''
     }
   })
+
+  const albumPicList = computed<string[]>({
+    get: () => form.albumPics || [],
+    set: (value) => {
+      form.albumPics = [...value]
+    }
+  })
+
+  const selectedBrandName = computed(
+    () => brandOptions.value.find((item) => item.id === form.brandId)?.name || ''
+  )
+
+  const selectedCategoryText = computed(() => {
+    if (!categoryPath.value.length) {
+      return ''
+    }
+
+    const labels: string[] = []
+    const walk = (items: CategoryTreeItem[], path: number[] = []) => {
+      for (const item of items) {
+        const currentPath = [...path, item.id]
+        if (currentPath.join(',') === categoryPath.value.join(',')) {
+          labels.splice(0, labels.length, ...currentPath.map((id) => findCategoryName(id)))
+          return true
+        }
+        if (item.children?.length && walk(item.children, currentPath)) {
+          return true
+        }
+      }
+      return false
+    }
+
+    const findCategoryName = (id: number): string => {
+      const queue = [...categoryOptions.value]
+      while (queue.length) {
+        const current = queue.shift()!
+        if (current.id === id) return current.name
+        if (current.children?.length) queue.push(...current.children)
+      }
+      return ''
+    }
+
+    walk(categoryOptions.value)
+    return labels.filter(Boolean).join(' / ')
+  })
+
+  const hasSpecSelection = computed(
+    () =>
+      specDefs.value.some((item) => (specSelectionMap[item.attrId] || []).length > 0) ||
+      customSpecs.value.some((item) => item.attrName.trim() && item.values.length)
+  )
+
+  const hasValidSkuPrice = computed(() =>
+    form.skuStockList.some((item) => Number(item.price ?? 0) > 0)
+  )
+
+  const submitChecks = computed(() => [
+    {
+      label: '商品信息',
+      done: Boolean(form.brandId && form.categoryId && form.name.trim())
+    },
+    {
+      label: '内容文案',
+      done: Boolean(form.keywords.trim() && form.description.trim())
+    },
+    {
+      label: '图片素材',
+      done: Boolean(form.pic)
+    },
+    {
+      label: '多规格与库存',
+      done: hasValidSkuPrice.value
+    }
+  ])
+
+  const requiredMissingCount = computed(
+    () => submitChecks.value.filter((item) => !item.done).length
+  )
 
   const ensureSingleSku = () => {
     if (!form.skuStockList.length) {
       form.skuStockList = [createDefaultSku()]
     }
   }
-
-  const singleSku = computed({
-    get: () => form.skuStockList[0] || createDefaultSku(),
-    set: (value) => {
-      form.skuStockList = [value]
-    }
-  })
-
-  const hasSpecSelection = computed(() =>
-    Object.values(specSelectionMap).some((items) => Array.isArray(items) && items.length > 0)
-  )
-
-  const hasValidSkuPrice = computed(() =>
-    (form.skuStockList || []).some((item) => Number(item.price ?? 0) > 0)
-  )
-
-  const requiredMissingCount = computed(() => {
-    let count = 0
-    if (!form.brandId) count += 1
-    if (!form.categoryId) count += 1
-    if (!String(form.name || '').trim()) count += 1
-    if (!String(form.pic || '').trim()) count += 1
-    if (!hasValidSkuPrice.value) count += 1
-    return count
-  })
-
-  const normalizeClone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
 
   const parseSpecData = (value?: string): AttrValueItem[] => {
     if (!value) return []
@@ -508,127 +616,165 @@
     }
   }
 
-  const getCategoryPath = (targetId?: number, tree = categoryTree.value): number[] => {
-    if (!targetId) return []
+  const buildSpecKey = (items: AttrValueItem[]) =>
+    items.map((item) => `${item.attrId ?? item.attrName}:${item.attrValue}`).join('|')
 
-    for (const item of tree) {
-      if (item.id === targetId) return [item.id]
-      if (item.children?.length) {
-        const childPath = getCategoryPath(targetId, item.children)
-        if (childPath.length) return [item.id, ...childPath]
-      }
-    }
-
-    return []
-  }
-
-  const syncParamValueMap = (items: AttrValueItem[]) => {
-    Object.keys(paramValueMap).forEach((key) => delete paramValueMap[Number(key)])
-    items.forEach((item) => {
-      if (item.attrId) {
-        paramValueMap[item.attrId] = String(item.attrValue || '')
-      }
+  const clearParamValues = () => {
+    Object.keys(paramValueMap).forEach((key) => {
+      delete paramValueMap[Number(key)]
     })
   }
 
-  const syncSpecSelectionFromSku = (skuList: SpuFormSkuItem[]) => {
-    Object.keys(specSelectionMap).forEach((key) => delete specSelectionMap[Number(key)])
-    skuList.forEach((sku) => {
+  const clearSpecSelections = () => {
+    Object.keys(specSelectionMap).forEach((key) => {
+      delete specSelectionMap[Number(key)]
+    })
+  }
+
+  const syncParamValueMap = (items: AttrValueItem[] = []) => {
+    clearParamValues()
+    paramDefs.value.forEach((item) => {
+      const current = items.find((attr) => attr.attrId === item.attrId)
+      paramValueMap[item.attrId] = String(current?.attrValue || '')
+    })
+  }
+
+  const syncSpecSelectionFromSku = () => {
+    clearSpecSelections()
+    customSpecs.value = []
+
+    form.skuStockList.forEach((sku) => {
       parseSpecData(sku.spData).forEach((item) => {
-        if (!item.attrId || !item.attrValue) return
-        if (!specSelectionMap[item.attrId]) {
-          specSelectionMap[item.attrId] = []
-        }
-        if (!specSelectionMap[item.attrId].includes(item.attrValue)) {
-          specSelectionMap[item.attrId].push(item.attrValue)
+        if (!item.attrValue) return
+
+        if (item.attrId) {
+          // 预设规格
+          const current = specSelectionMap[item.attrId] || []
+          specSelectionMap[item.attrId] = Array.from(new Set([...current, item.attrValue]))
+        } else if (item.attrName) {
+          // 自定义规格（编辑回填）
+          let existing = customSpecs.value.find((s) => s.attrName === item.attrName)
+          if (!existing) {
+            existing = { tempId: nextTempId--, attrName: item.attrName, values: [] }
+            customSpecs.value.push(existing)
+          }
+          if (!existing.values.includes(item.attrValue)) {
+            existing.values.push(item.attrValue)
+          }
         }
       })
     })
   }
 
-  const applyFormData = (data?: Partial<SpuDetailItem>) => {
-    Object.assign(form, createDefaultForm(), {
-      ...normalizeClone(data || {}),
-      id: data?.id,
-      albumPics: Array.isArray(data?.albumPics) ? [...data.albumPics] : [],
-      detailMobileHtml: data?.detailMobileHtml || data?.detailHtml || '',
-      skuStockList:
-        Array.isArray(data?.skuStockList) && data.skuStockList.length
-          ? normalizeClone(data.skuStockList)
-          : [createDefaultSku()]
-    })
-
-    categoryPath.value = getCategoryPath(form.categoryId)
-    syncParamValueMap(data?.attrValueList || [])
-    syncSpecSelectionFromSku(form.skuStockList)
-    ensureSingleSku()
-    initialSnapshot.value = normalizeClone(form)
-  }
-
-  const buildCartesianProduct = (groups: AttrValueItem[][]): AttrValueItem[][] => {
-    if (!groups.length) return []
-    return groups.reduce<AttrValueItem[][]>(
-      (result, current) =>
-        result.flatMap((resultItem) => current.map((currentItem) => [...resultItem, currentItem])),
+  const buildCartesianProduct = <T,>(groups: T[][]) =>
+    groups.reduce<T[][]>(
+      (accumulator, current) => {
+        if (!current.length) {
+          return accumulator
+        }
+        return accumulator.flatMap((items) => current.map((item) => [...items, item]))
+      },
       [[]]
     )
-  }
-
-  const buildSpecKey = (items: AttrValueItem[]) =>
-    items.map((item) => `${item.attrId}:${item.attrValue}`).join('|')
 
   const handleSpecSelectionChange = () => {
-    const selectedGroups = specDefs.value
-      .map((item) =>
-        (specSelectionMap[item.attrId] || []).map((value) => ({
-          attrId: item.attrId,
-          attrName: item.attrName,
-          attrValue: value
-        }))
-      )
-      .filter((group) => group.length)
+    // 预设规格
+    const selectedSpecs = specDefs.value
+      .map((item) => ({
+        attrId: item.attrId as number | undefined,
+        attrName: item.attrName,
+        values: specSelectionMap[item.attrId] || []
+      }))
+      .filter((item) => item.values.length)
 
-    if (!selectedGroups.length) {
-      form.skuStockList = [form.skuStockList[0] || createDefaultSku()]
-      form.skuStockList[0].spData = '[]'
+    // 自定义规格
+    const customSpecItems = customSpecs.value
+      .filter((item) => item.attrName.trim() && item.values.length)
+      .map((item) => ({
+        attrId: undefined as number | undefined,
+        attrName: item.attrName,
+        values: item.values
+      }))
+
+    const allSpecs = [...selectedSpecs, ...customSpecItems]
+
+    if (!allSpecs.length) {
+      form.skuStockList = [createDefaultSku()]
       return
     }
 
-    const previousMap = new Map(
-      form.skuStockList.map((item) => [buildSpecKey(parseSpecData(item.spData)), item])
+    const previousMap = new Map<string, SpuFormSkuItem>(
+      form.skuStockList.map(
+        (item) =>
+          [buildSpecKey(parseSpecData(item.spData)), JSON.parse(JSON.stringify(item))] as const
+      )
     )
 
-    form.skuStockList = buildCartesianProduct(selectedGroups).map((attrs, index) => {
-      const key = buildSpecKey(attrs)
+    const groups = allSpecs.map((item) =>
+      item.values.map<AttrValueItem>((value) => ({
+        attrId: item.attrId,
+        attrName: item.attrName,
+        attrValue: value
+      }))
+    )
+
+    const combinations = buildCartesianProduct(groups)
+    form.skuStockList = combinations.map((items) => {
+      const key = buildSpecKey(items)
       const previous = previousMap.get(key)
       return {
-        id: previous?.id,
-        skuCode: previous?.skuCode || `${form.spuCode || 'SPU'}-${index + 1}`,
-        pic: previous?.pic || form.pic,
-        price: Number(previous?.price ?? 0),
-        originalPrice: Number(previous?.originalPrice ?? 0),
-        stock: Number(previous?.stock ?? 0),
-        lowStock: Number(previous?.lowStock ?? 0),
-        sale: Number(previous?.sale ?? 0),
-        enableStatus: Number(previous?.enableStatus ?? 1) === 1 ? 1 : 0,
-        spData: JSON.stringify(attrs)
+        ...createDefaultSku(),
+        ...previous,
+        spData: JSON.stringify(items)
       }
     })
   }
 
-  const loadBaseOptions = async () => {
-    const [brandPage, categories] = await Promise.all([
-      fetchBrandPage({ current: 1, size: 200 }),
-      fetchCategoryTree()
-    ])
-    brandOptions.value = brandPage.records || []
-    categoryTree.value = categories || []
+  const addCustomSpec = () => {
+    customSpecs.value.push({
+      tempId: nextTempId--,
+      attrName: '',
+      values: []
+    })
+  }
+
+  const removeCustomSpec = (tempId: number) => {
+    customSpecs.value = customSpecs.value.filter((item) => item.tempId !== tempId)
+    handleSpecSelectionChange()
+  }
+
+  const resolveCategoryPath = (categoryId?: number) => {
+    if (!categoryId) {
+      categoryPath.value = []
+      return
+    }
+
+    const walk = (items: CategoryTreeItem[], path: number[] = []): number[] => {
+      for (const item of items) {
+        const currentPath = [...path, item.id]
+        if (item.id === categoryId) {
+          return currentPath
+        }
+        if (item.children?.length) {
+          const childPath = walk(item.children, currentPath)
+          if (childPath.length) return childPath
+        }
+      }
+      return []
+    }
+
+    categoryPath.value = walk(categoryOptions.value)
   }
 
   const loadCategoryMeta = async (categoryId?: number) => {
     if (!categoryId) {
       paramDefs.value = []
       specDefs.value = []
+      customSpecs.value = []
+      nextTempId = -1
+      clearParamValues()
+      clearSpecSelections()
+      ensureSingleSku()
       return
     }
 
@@ -636,27 +782,96 @@
       fetchCategoryParams(categoryId),
       fetchCategorySpecs(categoryId)
     ])
+
     paramDefs.value = params
     specDefs.value = specs
   }
 
-  const handleCategoryChange = async (value?: any) => {
-    const path = Array.isArray(value)
-      ? value.map((item) => Number(item)).filter((item) => Number.isFinite(item))
-      : value !== null && value !== undefined && value !== ''
-        ? [Number(value)]
-        : []
+  const applyFormData = (data?: SpuDetailItem) => {
+    Object.assign(form, createDefaultForm())
 
+    if (!data) {
+      categoryPath.value = []
+      clearParamValues()
+      clearSpecSelections()
+      ensureSingleSku()
+      return
+    }
+
+    Object.assign(form, {
+      id: data.id,
+      brandId: data.brandId,
+      categoryId: data.categoryId,
+      name: data.name || '',
+      subTitle: data.subTitle || '',
+      keywords: data.keywords || '',
+      description: data.description || '',
+      detailHtml: data.detailHtml || data.detailMobileHtml || '',
+      unit: data.unit || '',
+      weight: data.weight,
+      sort: data.sort ?? 0,
+      publishStatus: data.publishStatus ?? 0,
+      recommendStatus: data.recommendStatus ?? 0,
+      pic: data.pic || '',
+      albumPics: data.albumPics || [],
+      spuCode: data.spuCode || '',
+      attrValueList: data.attrValueList || [],
+      skuStockList: data.skuStockList?.length ? data.skuStockList : [createDefaultSku()]
+    })
+
+    syncParamValueMap(form.attrValueList)
+    syncSpecSelectionFromSku()
+    ensureSingleSku()
+  }
+
+  const loadBaseOptions = async () => {
+    const [brands, categories] = await Promise.all([
+      fetchBrandPage({ current: 1, size: 1000 }),
+      fetchCategoryTree()
+    ])
+    brandOptions.value = brands.records
+    categoryOptions.value = categories
+  }
+
+  const loadDetail = async () => {
+    if (!isEdit.value) {
+      applyFormData()
+      return
+    }
+
+    const id = Number(route.params.id || 0)
+    if (!id) {
+      router.replace('/product/spu')
+      return
+    }
+
+    const data = await getSpu(id)
+    await loadCategoryMeta(data.categoryId)
+    applyFormData(data)
+    resolveCategoryPath(data.categoryId)
+  }
+
+  const handleCategoryChange = async (value: CascaderValue | null | undefined) => {
+    const path = Array.isArray(value) ? value.map((item) => Number(item)) : []
+    categoryPath.value = path
     form.categoryId = path.length ? path[path.length - 1] : undefined
     syncParamValueMap([])
-    Object.keys(specSelectionMap).forEach((key) => delete specSelectionMap[Number(key)])
+    clearSpecSelections()
+    customSpecs.value = []
+    nextTempId = -1
     form.skuStockList = [createDefaultSku()]
     ensureSingleSku()
+    cascaderRef.value?.togglePopperVisible?.(false)
     await loadCategoryMeta(form.categoryId)
   }
 
-  const handleReset = () => {
-    applyFormData(initialSnapshot.value)
+  const handleReset = async () => {
+    loading.value = true
+    try {
+      await loadDetail()
+    } finally {
+      loading.value = false
+    }
   }
 
   const buildSubmitPayload = (): SpuSavePayload => {
@@ -696,27 +911,77 @@
       sort: Number(form.sort ?? 0),
       publishStatus: Number(form.publishStatus ?? 0) === 1 ? 1 : 0,
       recommendStatus: Number(form.recommendStatus ?? 0) === 1 ? 1 : 0,
-      detailHtml: String(form.detailMobileHtml || '').trim(),
-      detailMobileHtml: String(form.detailMobileHtml || '').trim(),
+      detailHtml: String(form.detailHtml || '').trim(),
+      detailMobileHtml: String(form.detailHtml || '').trim(),
       attrValueList,
       skuList
     }
   }
 
+  /** 提交前将自定义规格持久化到分类属性池，获取真实 attrId */
+  const persistCustomSpecs = async () => {
+    for (const spec of customSpecs.value) {
+      if (!spec.attrName.trim() || !spec.values.length) continue
+
+      // 创建属性到属性池
+      const newAttrId = await createCategoryAttribute({
+        name: spec.attrName.trim(),
+        type: 1,
+        entryMethod: 0,
+        searchable: 0,
+        filterable: 0,
+        optionList: spec.values
+      })
+
+      // 绑定到当前分类
+      await bindCategoryAttributesBatch(form.categoryId!, [
+        {
+          categoryId: form.categoryId!,
+          attrId: newAttrId,
+          options: spec.values
+        }
+      ])
+
+      // 更新 SKU 中对应规格的 attrId
+      form.skuStockList.forEach((sku) => {
+        const parsed = parseSpecData(sku.spData)
+        let changed = false
+        parsed.forEach((item) => {
+          if (!item.attrId && item.attrName === spec.attrName) {
+            item.attrId = newAttrId
+            changed = true
+          }
+        })
+        if (changed) {
+          sku.spData = JSON.stringify(parsed)
+        }
+      })
+    }
+  }
+
+  const scrollToSkuSection = async () => {
+    await nextTick()
+    const target = skuSectionRef.value?.$el || skuSectionRef.value
+    target?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  }
+
   const handleSubmit = async () => {
     await formRef.value?.validate()
+
     if (!form.pic) {
       ElMessage.warning('请先上传商品主图')
       return
     }
+
     if (!hasValidSkuPrice.value) {
       ElMessage.warning('请至少填写一个有效 SKU 售价')
-      activeTab.value = 'sku'
+      await scrollToSkuSection()
       return
     }
 
     saving.value = true
     try {
+      await persistCustomSpecs()
       const payload = buildSubmitPayload()
       if (isEdit.value && form.id) {
         await updateSpu(form.id, payload)
@@ -728,23 +993,6 @@
     } finally {
       saving.value = false
     }
-  }
-
-  const loadDetail = async () => {
-    if (!isEdit.value) {
-      applyFormData()
-      return
-    }
-
-    const id = Number(route.params.id || 0)
-    if (!id) {
-      router.replace('/product/spu')
-      return
-    }
-
-    const data = await getSpu(id)
-    await loadCategoryMeta(data.categoryId)
-    applyFormData(data)
   }
 
   onMounted(async () => {
@@ -759,13 +1007,7 @@
 </script>
 
 <style scoped lang="scss">
-  .spu-detail-page__topbar {
-    :deep(.el-card__body) {
-      padding: 14px 18px;
-    }
-  }
-
-  .spu-detail-page__tabs :deep(.el-tabs__header) {
-    margin-bottom: 0;
+  .spu-detail-page__sku-card {
+    scroll-margin-top: 88px;
   }
 </style>

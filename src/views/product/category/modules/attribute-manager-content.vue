@@ -87,53 +87,74 @@
       :title="editorForm.id ? '编辑属性' : '新增属性'"
       :width="editorDialogWidth"
       append-to-body
-      top="8vh"
+      top="6vh"
+      modal-class="attribute-editor-modal"
       destroy-on-close
     >
-      <ElForm label-position="top" class="attribute-manager-content__editor-form">
-        <ElFormItem label="属性名称" required>
-          <ElInput v-model.trim="editorForm.name" maxlength="100" class="w-full" />
-        </ElFormItem>
+      <div class="max-h-[72vh] overflow-y-auto pr-1">
+        <ElForm label-position="top" class="space-y-3">
+          <div
+            class="rounded-[var(--custom-radius)] border border-[var(--art-card-border)] px-5 py-4"
+          >
+            <section class="space-y-4">
+              <div class="font-medium text-[var(--el-text-color-primary)]">基础信息</div>
 
-        <ElFormItem label="属性类型" required>
-          <ElSelect v-model="editorForm.type" class="w-full">
-            <ElOption label="规格" :value="1" />
-            <ElOption label="参数" :value="0" />
-          </ElSelect>
-        </ElFormItem>
+              <ElFormItem label="属性名称" required>
+                <ElInput v-model.trim="editorForm.name" maxlength="100" class="w-full" />
+              </ElFormItem>
 
-        <ElFormItem label="单位">
-          <ElInput v-model.trim="editorForm.unit" maxlength="20" class="w-full" />
-        </ElFormItem>
+              <ElRow :gutter="16">
+                <ElCol :xs="24" :md="12">
+                  <ElFormItem label="属性类型" required>
+                    <ElSelect v-model="editorForm.type" class="w-full">
+                      <ElOption label="规格" :value="1" />
+                      <ElOption label="参数" :value="0" />
+                    </ElSelect>
+                  </ElFormItem>
+                </ElCol>
+                <ElCol :xs="24" :md="12">
+                  <ElFormItem label="单位">
+                    <ElInput v-model.trim="editorForm.unit" maxlength="20" class="w-full" />
+                  </ElFormItem>
+                </ElCol>
+              </ElRow>
 
-        <ElFormItem label="录入方式">
-          <ElRadioGroup v-model="editorForm.entryMethod">
-            <ElRadio :value="1">预设选项</ElRadio>
-            <ElRadio :value="0">手工录入</ElRadio>
-          </ElRadioGroup>
-        </ElFormItem>
+              <div class="flex items-center justify-between gap-4">
+                <span class="text-sm text-[var(--el-text-color-primary)]">支持搜索</span>
+                <ElSwitch v-model="searchableValue" />
+              </div>
 
-        <div class="flex flex-wrap gap-8 md:gap-12">
-          <ElFormItem label="支持搜索">
-            <ElSwitch v-model="searchableValue" />
-          </ElFormItem>
+              <div class="flex items-center justify-between gap-4">
+                <span class="text-sm text-[var(--el-text-color-primary)]">支持筛选</span>
+                <ElSwitch v-model="filterableValue" />
+              </div>
+            </section>
 
-          <ElFormItem label="支持筛选">
-            <ElSwitch v-model="filterableValue" />
-          </ElFormItem>
-        </div>
+            <ElFormItem label="录入方式" class="mb-0">
+              <ElRadioGroup v-model="editorForm.entryMethod">
+                <ElRadio :value="1">预设选项</ElRadio>
+                <ElRadio :value="0">手工录入</ElRadio>
+              </ElRadioGroup>
+            </ElFormItem>
 
-        <ElFormItem v-if="Number(editorForm.entryMethod) === 1" label="预设选项">
-          <OptionTagInput
-            v-model="editorOptionValues"
-            placeholder="每行一个选项，也支持用逗号分隔"
-          />
-        </ElFormItem>
-      </ElForm>
+            <section v-if="Number(editorForm.entryMethod) === 1" class="mt-6 space-y-4">
+              <div class="font-medium text-[var(--el-text-color-primary)]">预设选项</div>
+
+              <ElFormItem class="mb-0">
+                <OptionTagInput
+                  v-model="editorOptionValues"
+                  placeholder="每行一个选项，也支持用逗号分隔"
+                />
+              </ElFormItem>
+            </section>
+          </div>
+        </ElForm>
+      </div>
 
       <template #footer>
-        <div class="flex items-center justify-end gap-2 pr-1">
+        <div class="flex justify-end gap-3">
           <ElButton @click="editorVisible = false">取消</ElButton>
+          <ElButton @click="handleEditorReset">重置</ElButton>
           <ElButton type="primary" :loading="editorSubmitting" @click="handleEditorSubmit">
             保存
           </ElButton>
@@ -183,7 +204,7 @@
   const emit = defineEmits<Emits>()
   const { width } = useWindowSize()
 
-  const editorDialogWidth = computed(() => `${Math.min(620, Math.max(width.value - 24, 320))}px`)
+  const editorDialogWidth = computed(() => (width.value < 768 ? 'calc(100vw - 24px)' : '760px'))
   const loading = ref(false)
   const keyword = ref('')
   const currentType = ref<-1 | CategoryAttributeType>(-1)
@@ -201,6 +222,16 @@
   const editorVisible = ref(false)
   const editorSubmitting = ref(false)
   const editorOptionsText = ref('')
+  const editorSnapshot = ref<CategoryAttributeSavePayload>({
+    id: undefined,
+    name: '',
+    type: 1,
+    unit: '',
+    entryMethod: 1,
+    searchable: 1,
+    filterable: 1,
+    optionList: []
+  })
   const editorForm = reactive<CategoryAttributeSavePayload>({
     id: undefined,
     name: '',
@@ -323,6 +354,31 @@
     editorOptionsText.value = ''
   }
 
+  function syncEditorSnapshot() {
+    editorSnapshot.value = {
+      id: editorForm.id,
+      name: String(editorForm.name || '').trim(),
+      type: Number(editorForm.type ?? 1) === 0 ? 0 : 1,
+      unit: String(editorForm.unit || '').trim(),
+      entryMethod: Number(editorForm.entryMethod ?? 1) === 0 ? 0 : 1,
+      searchable: Number(editorForm.searchable ?? 0) === 1 ? 1 : 0,
+      filterable: Number(editorForm.filterable ?? 0) === 1 ? 1 : 0,
+      optionList: [...parseOptionText(editorOptionsText.value)]
+    }
+  }
+
+  function resetToEditorSnapshot() {
+    Object.assign(editorForm, {
+      ...editorSnapshot.value,
+      optionList: [...(editorSnapshot.value.optionList || [])]
+    })
+    editorOptionsText.value = (editorSnapshot.value.optionList || []).join('\n')
+  }
+
+  function handleEditorReset() {
+    resetToEditorSnapshot()
+  }
+
   async function loadList() {
     loading.value = true
     try {
@@ -371,11 +427,13 @@
 
   async function openEditor(id?: number) {
     resetEditorForm()
+    syncEditorSnapshot()
 
     if (id) {
       const detail = await getCategoryAttribute(id)
       Object.assign(editorForm, detail)
       editorOptionsText.value = (detail.optionList || []).join('\n')
+      syncEditorSnapshot()
     }
 
     editorVisible.value = true
@@ -495,13 +553,7 @@
 </script>
 
 <style scoped lang="scss">
-  .attribute-manager-content__editor-form {
-    :deep(.el-form-item) {
-      margin-bottom: 14px;
-    }
-
-    :deep(.el-form-item:last-child) {
-      margin-bottom: 0;
-    }
+  :deep(.attribute-editor-modal .el-overlay-dialog) {
+    overflow: hidden;
   }
 </style>

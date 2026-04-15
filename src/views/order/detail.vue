@@ -1,22 +1,26 @@
 <template>
-  <div class="art-full-height order-detail-page" v-loading="pageLoading">
-    <div class="mb-3">
+  <div class="art-full-height flex flex-col gap-4" v-loading="pageLoading">
+    <div>
       <ElButton @click="router.push('/order')">返回订单列表</ElButton>
     </div>
 
     <ElEmpty v-if="!pageLoading && !detail" description="未找到订单" />
 
     <template v-else-if="detail">
-      <ElCard class="art-card" shadow="never">
-        <div class="order-detail-header">
+      <ElCard class="art-card-xs" shadow="never">
+        <div class="flex items-start justify-between gap-4 max-lg:flex-col">
           <div class="min-w-0 flex-1">
-            <div class="order-detail-header__title">
+            <div
+              class="flex min-w-0 items-center gap-3 text-xl font-semibold text-[var(--el-text-color-primary)]"
+            >
               <span class="truncate">订单详情</span>
               <ElTag :type="statusTagType" effect="light" round>
                 {{ getOrderStatusText(detail.status, detail.statusDesc) }}
               </ElTag>
             </div>
-            <div class="order-detail-header__meta">
+            <div
+              class="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm text-[var(--el-text-color-secondary)]"
+            >
               <span class="font-mono">{{ detail.orderNo }}</span>
               <span>用户 ID：{{ detail.userId }}</span>
               <span>下单：{{ formatDateTime(detail.createTime) || '-' }}</span>
@@ -24,13 +28,15 @@
             </div>
           </div>
 
-          <div class="order-detail-header__amount">
-            <span>应付金额</span>
-            <strong>{{ formatMoney(detail.payAmount) }}</strong>
+          <div class="text-left max-lg:w-full lg:min-w-[160px] lg:text-right">
+            <div class="text-xs text-[var(--el-text-color-secondary)]">应付金额</div>
+            <div class="mt-2 text-2xl font-semibold text-[var(--el-text-color-primary)]">
+              {{ formatMoney(detail.payAmount) }}
+            </div>
           </div>
         </div>
 
-        <ElDescriptions :column="4" border class="mt-4 order-detail-header__descriptions">
+        <ElDescriptions :column="4" border class="mt-4">
           <ElDescriptionsItem label="付款状态">{{ paymentStatusText }}</ElDescriptionsItem>
           <ElDescriptionsItem label="支付渠道">{{ paymentChannelText }}</ElDescriptionsItem>
           <ElDescriptionsItem label="物流状态">{{ shipmentStatusText }}</ElDescriptionsItem>
@@ -41,29 +47,29 @@
           <ElDescriptionsItem label="运费">{{
             formatMoney(detail.freightAmount)
           }}</ElDescriptionsItem>
-          <ElDescriptionsItem label="优惠金额"
-            >-{{ formatMoney(detail.discountAmount) }}</ElDescriptionsItem
-          >
+          <ElDescriptionsItem label="优惠金额">
+            -{{ formatMoney(detail.discountAmount) }}
+          </ElDescriptionsItem>
           <ElDescriptionsItem label="支付单号">
             {{ detail.payment?.paymentNo || '-' }}
           </ElDescriptionsItem>
         </ElDescriptions>
 
-        <div class="order-detail-header__actions">
-          <ElButton v-if="canAdjustAmount" type="primary" @click="openAmountDialog"
-            >调整金额</ElButton
-          >
+        <div class="mt-4 flex flex-wrap gap-3">
+          <ElButton v-if="canAdjustAmount" type="primary" @click="openAmountDialog">
+            调整金额
+          </ElButton>
           <ElButton v-if="canEditAddress" @click="openAddressDialog">修改地址</ElButton>
           <ElButton v-if="canShip" @click="deliverVisible = true">发货</ElButton>
           <ElButton @click="refreshShipment">刷新物流</ElButton>
-          <ElButton v-if="canForceCancel" type="danger" plain @click="handleForceCancel"
-            >强制取消</ElButton
-          >
+          <ElButton v-if="canForceCancel" type="danger" plain @click="handleForceCancel">
+            强制取消
+          </ElButton>
         </div>
       </ElCard>
 
-      <div class="order-detail-layout">
-        <div class="order-detail-layout__main">
+      <div class="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_320px]">
+        <div class="space-y-4">
           <ElCard shadow="never" class="art-card-xs">
             <template #header>商品明细</template>
             <ArtTable :data="detail.items || []" :columns="itemColumns" empty-text="暂无商品" />
@@ -71,34 +77,28 @@
 
           <ElCard shadow="never" class="art-card-xs">
             <template #header>物流与收货</template>
-            <div class="order-detail-grid">
-              <div class="order-detail-block">
-                <div class="order-detail-block__label">物流方式</div>
-                <div class="order-detail-block__value">
-                  {{ detail.shipment?.logisticsCompany || '暂未配置物流公司' }}
-                </div>
-                <div class="order-detail-block__meta"> 物流状态：{{ shipmentStatusText }} </div>
-                <div class="order-detail-block__meta">
-                  运单号：{{ detail.shipment?.logisticsNo || '-' }}
-                </div>
-                <div class="order-detail-block__meta">
-                  发货时间：{{
-                    detail.shipment?.shipTime ? formatDateTime(detail.shipment.shipTime) : '-'
-                  }}
-                </div>
-              </div>
 
-              <div class="order-detail-block">
-                <div class="order-detail-block__label">收货地址</div>
-                <div class="order-detail-block__value">{{ fullAddress || '暂无收货地址' }}</div>
-                <div class="order-detail-block__meta">
-                  收货人：{{ detail.receiverName || '-' }}
-                </div>
-                <div class="order-detail-block__meta">
-                  手机号：{{ detail.receiverPhone || '-' }}
-                </div>
-              </div>
-            </div>
+            <ElDescriptions :column="1" border>
+              <ElDescriptionsItem label="物流方式">
+                {{ detail.shipment?.logisticsCompany || '暂未配置物流公司' }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="物流状态">{{ shipmentStatusText }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="运单号">
+                {{ detail.shipment?.logisticsNo || '-' }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="发货时间">
+                {{ detail.shipment?.shipTime ? formatDateTime(detail.shipment.shipTime) : '-' }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="收货地址">
+                {{ fullAddress || '暂无收货地址' }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="收货人">{{
+                detail.receiverName || '-'
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="手机号">
+                {{ detail.receiverPhone || '-' }}
+              </ElDescriptionsItem>
+            </ElDescriptions>
           </ElCard>
 
           <ElCard shadow="never" class="art-card-xs">
@@ -110,9 +110,13 @@
                 :timestamp="formatDateTime(log.createTime)"
                 placement="top"
               >
-                <div class="order-log-item">
-                  <div class="order-log-item__title">{{ getLogTitle(log) }}</div>
-                  <div class="order-log-item__meta">{{ getLogMeta(log) }}</div>
+                <div class="grid gap-1">
+                  <div class="text-sm font-medium text-[var(--el-text-color-primary)]">
+                    {{ getLogTitle(log) }}
+                  </div>
+                  <div class="text-xs leading-6 text-[var(--el-text-color-secondary)]">
+                    {{ getLogMeta(log) }}
+                  </div>
                 </div>
               </ElTimelineItem>
             </ElTimeline>
@@ -120,53 +124,43 @@
           </ElCard>
         </div>
 
-        <div class="order-detail-layout__side">
+        <div class="space-y-4">
           <ElCard shadow="never" class="art-card-xs">
             <template #header>支付信息</template>
-            <div class="order-detail-stack">
-              <div class="order-detail-stack__row">
-                <span>付款状态</span>
+            <ElDescriptions :column="1" border>
+              <ElDescriptionsItem label="付款状态">
                 <ElTag :type="paymentTagType" effect="light" round>
                   {{ paymentStatusText }}
                 </ElTag>
-              </div>
-              <div class="order-detail-stack__row">
-                <span>支付渠道</span>
-                <strong>{{ paymentChannelText }}</strong>
-              </div>
-              <div class="order-detail-stack__row">
-                <span>支付单号</span>
-                <strong class="font-mono">{{ detail.payment?.paymentNo || '-' }}</strong>
-              </div>
-              <div class="order-detail-stack__row">
-                <span>支付时间</span>
-                <strong>{{
-                  detail.payment?.paidTime ? formatDateTime(detail.payment.paidTime) : '-'
-                }}</strong>
-              </div>
-            </div>
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="支付渠道">{{ paymentChannelText }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="支付单号">
+                <span class="font-mono">{{ detail.payment?.paymentNo || '-' }}</span>
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="支付时间">
+                {{ detail.payment?.paidTime ? formatDateTime(detail.payment.paidTime) : '-' }}
+              </ElDescriptionsItem>
+            </ElDescriptions>
           </ElCard>
 
           <ElCard shadow="never" class="art-card-xs">
             <template #header>金额与营销</template>
-            <div class="order-detail-stack">
-              <div class="order-detail-stack__row">
-                <span>小计</span>
-                <strong>{{ formatMoney(detail.totalAmount) }}</strong>
-              </div>
-              <div class="order-detail-stack__row">
-                <span>运费</span>
-                <strong>{{ formatMoney(detail.freightAmount) }}</strong>
-              </div>
-              <div class="order-detail-stack__row">
-                <span>优惠金额</span>
-                <strong>-{{ formatMoney(detail.discountAmount) }}</strong>
-              </div>
-              <div class="order-detail-stack__row is-emphasis">
-                <span>应付金额</span>
-                <strong>{{ formatMoney(detail.payAmount) }}</strong>
-              </div>
-            </div>
+            <ElDescriptions :column="1" border>
+              <ElDescriptionsItem label="小计">{{
+                formatMoney(detail.totalAmount)
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="运费">{{
+                formatMoney(detail.freightAmount)
+              }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="优惠金额">
+                -{{ formatMoney(detail.discountAmount) }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="应付金额">
+                <span class="text-lg font-semibold text-[var(--el-text-color-primary)]">
+                  {{ formatMoney(detail.payAmount) }}
+                </span>
+              </ElDescriptionsItem>
+            </ElDescriptions>
           </ElCard>
 
           <ElCard shadow="never" class="art-card-xs">
@@ -194,35 +188,31 @@
               </div>
             </div>
 
-            <div v-else class="order-remark-preview">
+            <div
+              v-else
+              class="min-h-[88px] whitespace-pre-wrap text-sm leading-7 text-[var(--el-text-color-primary)]"
+            >
               {{ detail.remark || '暂无备注信息' }}
             </div>
           </ElCard>
 
           <ElCard shadow="never" class="art-card-xs">
             <template #header>订单概况</template>
-            <div class="order-detail-stack">
-              <div class="order-detail-stack__row">
-                <span>订单号</span>
-                <strong class="font-mono">{{ detail.orderNo }}</strong>
-              </div>
-              <div class="order-detail-stack__row">
-                <span>用户 ID</span>
-                <strong>{{ detail.userId }}</strong>
-              </div>
-              <div class="order-detail-stack__row">
-                <span>订单状态</span>
-                <strong>{{ getOrderStatusText(detail.status, detail.statusDesc) }}</strong>
-              </div>
-              <div class="order-detail-stack__row">
-                <span>商品数量</span>
-                <strong>{{ detail.items?.length || 0 }} 件</strong>
-              </div>
-              <div class="order-detail-stack__row">
-                <span>更新时间</span>
-                <strong>{{ formatDateTime(detail.updateTime) || '-' }}</strong>
-              </div>
-            </div>
+            <ElDescriptions :column="1" border>
+              <ElDescriptionsItem label="订单号">
+                <span class="font-mono">{{ detail.orderNo }}</span>
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="用户 ID">{{ detail.userId }}</ElDescriptionsItem>
+              <ElDescriptionsItem label="订单状态">
+                {{ getOrderStatusText(detail.status, detail.statusDesc) }}
+              </ElDescriptionsItem>
+              <ElDescriptionsItem label="商品数量"
+                >{{ detail.items?.length || 0 }} 件</ElDescriptionsItem
+              >
+              <ElDescriptionsItem label="更新时间">
+                {{ formatDateTime(detail.updateTime) || '-' }}
+              </ElDescriptionsItem>
+            </ElDescriptions>
           </ElCard>
         </div>
       </div>
@@ -639,177 +629,3 @@
     { immediate: true }
   )
 </script>
-
-<style scoped lang="scss">
-  .order-detail-page {
-    min-height: 100%;
-  }
-
-  .order-detail-header {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    justify-content: space-between;
-  }
-
-  .order-detail-header__title {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    min-width: 0;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--el-text-color-primary);
-  }
-
-  .order-detail-header__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 14px;
-    margin-top: 8px;
-    font-size: 13px;
-    color: var(--el-text-color-secondary);
-  }
-
-  .order-detail-header__amount {
-    min-width: 132px;
-    text-align: right;
-  }
-
-  .order-detail-header__amount span {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-  }
-
-  .order-detail-header__amount strong {
-    font-size: 24px;
-    line-height: 1;
-    color: var(--el-text-color-primary);
-  }
-
-  .order-detail-header__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 16px;
-  }
-
-  .order-detail-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
-    gap: 16px;
-    margin-top: 16px;
-  }
-
-  .order-detail-layout__main,
-  .order-detail-layout__side {
-    display: grid;
-    gap: 16px;
-    align-content: start;
-  }
-
-  .order-detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .order-detail-block {
-    padding: 14px;
-    background: var(--ease-panel-bg);
-    border: 1px solid var(--ease-panel-border);
-    border-radius: var(--shop-control-radius);
-    box-shadow: var(--ease-panel-shadow);
-  }
-
-  .order-detail-block__label {
-    margin-bottom: 8px;
-    font-size: 13px;
-    color: var(--el-text-color-secondary);
-  }
-
-  .order-detail-block__value {
-    margin-bottom: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.6;
-    color: var(--el-text-color-primary);
-  }
-
-  .order-detail-block__meta {
-    font-size: 13px;
-    line-height: 1.7;
-    color: var(--el-text-color-secondary);
-  }
-
-  .order-detail-stack {
-    display: grid;
-    gap: 10px;
-  }
-
-  .order-detail-stack__row {
-    display: flex;
-    gap: 12px;
-    justify-content: space-between;
-    padding-bottom: 10px;
-    font-size: 13px;
-    color: var(--el-text-color-secondary);
-    border-bottom: 1px dashed var(--el-border-color-lighter);
-  }
-
-  .order-detail-stack__row strong {
-    color: var(--el-text-color-primary);
-    text-align: right;
-  }
-
-  .order-detail-stack__row.is-emphasis strong {
-    font-size: 18px;
-  }
-
-  .order-log-item {
-    display: grid;
-    gap: 4px;
-  }
-
-  .order-log-item__title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-  }
-
-  .order-log-item__meta {
-    font-size: 12px;
-    line-height: 1.6;
-    color: var(--el-text-color-secondary);
-  }
-
-  .order-remark-preview {
-    min-height: 88px;
-    font-size: 14px;
-    line-height: 1.8;
-    color: var(--el-text-color-primary);
-    white-space: pre-wrap;
-  }
-
-  @media (width <= 1120px) {
-    .order-detail-layout {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .order-detail-header {
-      flex-direction: column;
-    }
-
-    .order-detail-header__amount {
-      text-align: left;
-    }
-  }
-
-  @media (width <= 768px) {
-    .order-detail-grid {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
-</style>

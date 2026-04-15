@@ -1,17 +1,19 @@
 <template>
   <article>
-    <div class="text-sm font-medium text-g-900">{{ title }}</div>
+    <div v-if="title" class="text-sm font-medium text-[var(--el-text-color-primary)]">{{
+      title
+    }}</div>
 
-    <div class="mt-2.5">
+    <div :class="title ? 'mt-2' : ''">
       <button
         v-if="!value"
         type="button"
-        class="flex-cc flex-col rounded-md border border-dashed border-[#d9d9d9] bg-transparent p-0"
+        class="flex-cc flex-col rounded-md border border-dashed border-[var(--art-card-border)] bg-transparent p-0"
         :style="previewStyle"
         @click="openCropDialog"
       >
-        <ElIcon class="!text-xl !text-g-600"><Plus /></ElIcon>
-        <div class="mt-2 text-sm text-g-600">{{ emptyText }}</div>
+        <ElIcon class="!text-xl !text-[var(--el-text-color-secondary)]"><Plus /></ElIcon>
+        <div class="mt-2 text-sm text-[var(--el-text-color-secondary)]">{{ emptyText }}</div>
       </button>
 
       <ElImage
@@ -24,40 +26,24 @@
         preview-teleported
       />
 
-      <div v-if="tip" class="mt-2 text-xs text-g-700">{{ tip }}</div>
+      <div v-if="tip" class="mt-2 text-xs text-[var(--el-text-color-secondary)]">{{ tip }}</div>
 
-      <div class="mt-2 flex flex-wrap items-center gap-3 text-xs max-sm:gap-2">
-        <button
-          type="button"
-          class="cursor-pointer border-none bg-transparent p-0 text-[var(--theme-color)]"
-          :disabled="uploading"
-          @click="openCropDialog"
-        >
+      <ElSpace wrap class="mt-1.5">
+        <ElButton link type="primary" :disabled="uploading" @click="openCropDialog">
           {{ uploading ? '上传中...' : value ? '重新裁剪' : '裁剪上传' }}
-        </button>
-        <button
-          type="button"
-          class="cursor-pointer border-none bg-transparent p-0 text-[var(--el-text-color-secondary)]"
-          @click="toggleManualInput"
-        >
+        </ElButton>
+        <ElButton link @click="toggleManualInput">
           {{ showManualInput ? '收起地址' : '使用地址' }}
-        </button>
-        <button
-          v-if="value"
-          type="button"
-          class="cursor-pointer border-none bg-transparent p-0 text-[var(--el-text-color-secondary)]"
-          @click="clearImage"
-        >
-          清空
-        </button>
-      </div>
+        </ElButton>
+        <ElButton v-if="value" link @click="clearImage"> 清空 </ElButton>
+      </ElSpace>
 
       <ElInput
         v-if="showManualInput"
         v-model.trim="value"
         :placeholder="inputPlaceholder"
         clearable
-        class="mt-3 w-full"
+        class="mt-2.5 w-full"
       />
     </div>
 
