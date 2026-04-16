@@ -470,3 +470,72 @@ export function publishSpu(spuIds: number[], publishStatus: SpuFlag01) {
     showSuccessMessage: true
   })
 }
+
+export interface SpuSelectorSkuItem {
+  id: number
+  skuCode?: string
+  pic?: string
+  price: number
+  stock: number
+  enableStatus: SpuFlag01
+  attrValuesObj: AttrValueItem[]
+}
+
+export interface SpuWithSkusItem extends SpuListItem {
+  skuList: SpuSelectorSkuItem[]
+}
+
+interface SpuWithSkusRespVO extends SpuRespVO {
+  skuVOList?: SkuRespVO[]
+}
+
+interface PageSpuWithSkusRespVO {
+  pageNum: number
+  pageSize: number
+  totalPage: number
+  total: number
+  list: SpuWithSkusRespVO[]
+}
+
+function toSpuSelectorSkuItem(item: SkuRespVO): SpuSelectorSkuItem {
+  return {
+    id: Number(item.id || 0),
+    skuCode: item.skuCode,
+    pic: item.pic,
+    price: Number(item.basePrice ?? 0),
+    stock: Number(item.stock ?? 0),
+    enableStatus: Number(item.enableStatus ?? 1) === 1 ? 1 : 0,
+    attrValuesObj: normalizeAttrValueList(item.attrValuesObj || item.attrValues || item.specValues)
+  }
+}
+
+function toSpuWithSkusItem(item: SpuWithSkusRespVO): SpuWithSkusItem {
+  return {
+    ...toSpuListItem(item),
+    skuList: (item.skuVOList || item.skuList || [])
+      .map(toSpuSelectorSkuItem)
+      .filter((sku) => sku.id > 0)
+  }
+}
+
+function toSpuWithSkusPageResponse(
+  response: PageSpuWithSkusRespVO
+): Api.Common.PaginatedResponse<SpuWithSkusItem> {
+  return {
+    records: (response.list || []).map(toSpuWithSkusItem),
+    current: Number(response.pageNum || 1),
+    size: Number(response.pageSize || 10),
+    total: Number(response.total || 0)
+  }
+}
+
+export function fetchSpuWithSkusPage(
+  params: SpuQueryParams
+): Promise<Api.Common.PaginatedResponse<SpuWithSkusItem>> {
+  return request
+    .get<PageSpuWithSkusRespVO>({
+      url: `${SPU_BASE_PATH}/with-skus`,
+      params: buildSpuQueryParams(params)
+    })
+    .then(toSpuWithSkusPageResponse)
+}

@@ -12,6 +12,7 @@ AGENTS.md
 .codex
 CLAUDE.md
 refhtml
+.serena
 
 # Auto-generated files
 src/types/import/auto-imports.d.ts
