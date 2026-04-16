@@ -1,104 +1,141 @@
 <template>
-  <div class="art-full-height inventory-page">
-    <EaseTablePage
-      class="inventory-page__workbench"
-      v-model:columns="columnChecks"
-      v-model:showSearchBar="showSearchBar"
-      :loading="loading"
-      @refresh="refreshAll"
-    >
-      <template #search>
-        <InventorySearch
-          v-model="searchForm"
-          :brand-options="filterOptions.brands"
-          :category-options="filterOptions.categories"
-          :stock-status-options="filterOptions.stockStatuses"
-          @search="handleSearch"
-          @reset="handleResetSearch"
-        />
-      </template>
+  <EaseTablePage
+    class="product-inventory-page"
+    v-model:columns="columnChecks"
+    v-model:showSearchBar="showSearchBar"
+    :loading="loading"
+    :selection-count="selectedSkuIds.length"
+    @refresh="refreshAll"
+  >
+    <template #toolbarTop>
+      <EaseSegmentTabs v-model="activeTab" :items="tabItems" />
+    </template>
 
-      <template #table>
-        <ArtTable
-          :loading="loading"
-          :data="data"
-          row-key="spuId"
-          :expand-row-keys="expandedRowKeys"
-          :columns="columns"
-          :pagination="pagination"
-          :pagination-options="{ align: 'right' }"
-          @row-click="handleRowClick"
-          @expand-change="handleExpandChange"
-          @pagination:size-change="handleSizeChange"
-          @pagination:current-change="handleCurrentChange"
-        />
-      </template>
-    </EaseTablePage>
+    <template #search>
+      <InventorySearch
+        v-model="searchForm"
+        class="product-inventory-page__search"
+        :brand-options="filterOptions.brands"
+        :category-options="categoryTree"
+        :stock-status-options="stockStatusOptions"
+        @search="handleSearch"
+      />
+    </template>
 
-    <InventoryLogDrawer
-      v-model="logDrawerVisible"
-      :loading="logLoading"
-      :sku="activeLogSku"
-      :items="logList"
-    />
+    <template #selectionText="{ count }">已选{{ count }}个 SKU</template>
 
-    <InventoryCreateDialog
-      v-model="createDialogVisible"
-      :loading="creatingStock"
-      :spu="activeCreateSpu"
-      :candidates="createSkuCandidates"
-      :form="createForm"
-      @submit="handleSubmitCreateStock"
-      @closed="handleCreateDialogClosed"
-    />
-  </div>
+    <template #selectionActions>
+      <ElButton
+        v-for="action in selectionStatusActions"
+        :key="action.value"
+        :disabled="statusBatchLoading"
+        @click="handleBatchStatusUpdate(action.value)"
+        v-ripple
+      >
+        {{ action.label }}
+      </ElButton>
+    </template>
+
+    <template #table>
+      <ArtTable
+        ref="tableRef"
+        :loading="loading"
+        :data="data"
+        :columns="columns"
+        :pagination="pagination"
+        :pagination-options="{ hideOnSinglePage: false, align: 'right' }"
+        :row-class-name="getRowClassName"
+        :show-table-header="false"
+        row-key="skuId"
+        @selection-change="handleSelectionChange"
+        @pagination:size-change="handleSizeChange"
+        @pagination:current-change="handleCurrentChange"
+      />
+    </template>
+  </EaseTablePage>
+
+  <InventoryLogDrawer
+    v-model="logDrawerVisible"
+    :loading="logLoading"
+    :sku="activeLogSku"
+    :items="logList"
+  />
 </template>
 
 <script setup lang="ts">
-  import { ElImage, ElMessage, ElMessageBox, ElTag } from 'element-plus'
+  import { fetchCategoryTree, type CategoryTreeItem } from '@/api/category'
   import {
-    createStock,
-    deleteSku,
-    fetchSkuBySpuId,
-    fetchStockBySpuId,
     fetchStockFilterOptions,
     fetchStockLogs,
     fetchStockPage,
     updateStock,
-    type CreateStockPayload,
+    updateStockStatusBatch,
     type InventoryFilterOptions,
     type InventorySkuRow,
-    type InventorySpuRow,
-    type SkuCandidate,
-    type StockLogItem
+    type InventoryTab,
+    type OptionItem,
+    type StockLogItem,
+    type StockStatus,
+    type UpdateStockPayload
   } from '@/api/sku-stock'
-  import { useTable } from '@/hooks/core/useTable'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
+  import EaseSegmentTabs from '@/components/project/ease-segment-tabs/index.vue'
   import EaseTablePage from '@/components/project/ease-table-page/index.vue'
-  import InventoryCreateDialog, {
-    type CreateInventoryForm
-  } from './modules/inventory-create-dialog.vue'
+  import { useTable } from '@/hooks/core/useTable'
+  import { ElImage, ElInput, ElMessage, ElMessageBox } from 'element-plus'
   import InventoryLogDrawer from './modules/inventory-log-drawer.vue'
   import InventorySearch, { type InventorySearchForm } from './modules/inventory-search.vue'
-  import InventorySpuExpand from './modules/inventory-spu-expand.vue'
 
   defineOptions({ name: 'ProductInventoryPage' })
 
-  interface InventorySpuRowState extends InventorySpuRow {
-    records: InventorySkuRow[]
-    recordsLoaded: boolean
-    recordsLoading: boolean
+  interface InventoryOriginState {
+    stock: number
+    lowStock: number
+    stockStatus: StockStatus
   }
 
+  interface InventoryStatusAction {
+    value: StockStatus
+    label: string
+    confirmTitle: string
+  }
+
+  const DEFAULT_TABS: OptionItem[] = [
+    { value: 'all', label: '全部库存' },
+    { value: 'warning', label: '低库存' },
+    { value: 'empty', label: '缺货' },
+    { value: 'presale', label: '预售' }
+  ]
+
+  const DEFAULT_STOCK_STATUS_OPTIONS: OptionItem[] = [
+    { value: 0, label: '无货' },
+    { value: 1, label: '有货' },
+    { value: 2, label: '预售' }
+  ]
+
+  const STATUS_ACTIONS: InventoryStatusAction[] = [
+    { value: 1, label: '批量设为有货', confirmTitle: '批量设为有货' },
+    { value: 0, label: '批量设为无货', confirmTitle: '批量设为无货' },
+    { value: 2, label: '批量设为预售', confirmTitle: '批量设为预售' }
+  ]
+
   const router = useRouter()
+  const tableRef = ref<{
+    elTableRef?: { clearSelection: () => void }
+  }>()
   const numberFormatter = new Intl.NumberFormat('zh-CN')
   const showSearchBar = ref(true)
-  const expandedRowKeys = ref<string[]>([])
+  const batchSaving = ref(false)
+  const statusBatchLoading = ref(false)
+  const savingSkuIds = ref<number[]>([])
+  const selectedSkuIds = ref<number[]>([])
+  const activeTab = ref<InventoryTab>('all')
+  const categoryTree = ref<CategoryTreeItem[]>([])
   const filterOptions = ref<InventoryFilterOptions>({
     brands: [],
     categories: [],
-    stockStatuses: [],
-    tabs: []
+    stockStatuses: DEFAULT_STOCK_STATUS_OPTIONS,
+    tabs: DEFAULT_TABS
   })
   const searchForm = ref<InventorySearchForm>({
     keyword: undefined,
@@ -107,7 +144,7 @@
     stockStatus: undefined,
     lowStockWarning: false
   })
-  const originBySkuId = ref(new Map<number, { stock: number; lowStock: number }>())
+  const originBySkuId = ref(new Map<number, InventoryOriginState>())
 
   const logDrawerVisible = ref(false)
   const logLoading = ref(false)
@@ -116,194 +153,69 @@
   )
   const logList = ref<StockLogItem[]>([])
 
-  const createDialogVisible = ref(false)
-  const creatingStock = ref(false)
-  const activeCreateSpu = ref<InventorySpuRowState | null>(null)
-  const createSkuCandidates = ref<SkuCandidate[]>([])
-  const createForm = reactive<CreateInventoryForm>({
-    skuId: undefined,
-    stock: 0,
-    lowStock: 0,
-    stockStatus: 0
+  const inventoryRows = computed(() => data.value as InventorySkuRow[])
+  const selectedRows = computed(() =>
+    inventoryRows.value.filter((item) => selectedSkuIds.value.includes(item.skuId))
+  )
+  const selectionStatusActions = computed(() => STATUS_ACTIONS)
+  const tabItems = computed(() => {
+    const tabs = filterOptions.value.tabs.length ? filterOptions.value.tabs : DEFAULT_TABS
+    return tabs.map((item) => ({
+      value: String(item.value) as InventoryTab,
+      label: item.label
+    }))
   })
+  const stockStatusOptions = computed(() =>
+    filterOptions.value.stockStatuses.length
+      ? filterOptions.value.stockStatuses
+      : DEFAULT_STOCK_STATUS_OPTIONS
+  )
+
+  const toOptionalNumber = (value: unknown) => {
+    if (value === undefined || value === null || value === '') return undefined
+    const next = Number(value)
+    return Number.isNaN(next) ? undefined : next
+  }
 
   const formatNumber = (value: number) => numberFormatter.format(value || 0)
-  const rowInlineStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    minWidth: '0'
-  } as const
-  const expandTriggerBaseStyle = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '24px',
-    height: '24px',
-    flexShrink: '0',
-    color: 'var(--el-text-color-secondary)',
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'transform 0.2s ease'
-  } as const
-  const imageBoxStyle = {
-    width: '44px',
-    height: '44px',
-    flexShrink: '0',
-    borderRadius: '12px',
-    overflow: 'hidden',
-    border: '1px solid var(--el-border-color-lighter)',
-    background: 'var(--el-fill-color-light)'
-  } as const
-  const imageFallbackStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    height: '100%',
-    fontSize: '12px',
-    color: 'var(--el-text-color-placeholder)',
-    background: 'var(--el-fill-color-light)'
-  } as const
-  const primaryTextStyle = {
-    display: 'block',
-    minWidth: '0',
-    overflow: 'hidden',
-    fontWeight: '600',
-    color: 'var(--el-text-color-primary)',
-    textAlign: 'left',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap'
-  } as const
-  const secondaryTextStyle = {
-    display: 'inline-block',
-    overflow: 'hidden',
-    fontSize: '12px',
-    color: 'var(--el-text-color-secondary)',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap'
-  } as const
 
-  const renderSpuImageCell = (row: InventorySpuRowState) =>
-    h(
-      'div',
-      {
-        style: {
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-start'
-        }
-      },
-      [
-        h(
-          ElImage,
-          {
-            src: row.pic,
-            fit: 'cover',
-            style: imageBoxStyle
-          },
-          {
-            error: () => h('div', { style: imageFallbackStyle }, '暂无'),
-            placeholder: () => h('div', { style: imageFallbackStyle }, '加载中')
-          }
-        )
-      ]
-    )
+  const formatSpecs = (specs: InventorySkuRow['specs']) =>
+    specs
+      .map((item) => [item.attrName, item.attrValue].filter(Boolean).join('：'))
+      .filter(Boolean)
+      .join(' · ')
 
-  const renderSpuExpandTrigger = (row: InventorySpuRowState) => {
-    const expanded = expandedRowKeys.value.includes(String(row.spuId))
+  const normalizeIntegerInput = (value: unknown) => {
+    const rawValue = String(value ?? '').trim()
+    if (!rawValue) return 0
 
-    return h(
-      'button',
-      {
-        type: 'button',
-        style: {
-          ...expandTriggerBaseStyle,
-          transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)'
-        },
-        onClick: async (event: MouseEvent) => {
-          event.stopPropagation()
-          if (expanded) {
-            collapseExpanded(row.spuId)
-            return
-          }
-          await expandSpuRow(row)
-        }
-      },
-      h('span', { style: { fontSize: '16px', lineHeight: '1' } }, '›')
-    )
+    const normalized = rawValue.replace(/[^\d]/g, '')
+    return normalized ? Number(normalized) : 0
   }
-
-  const renderSpuNameCell = (row: InventorySpuRowState) =>
-    h(
-      'div',
-      {
-        style: {
-          ...rowInlineStyle,
-          gap: '0'
-        }
-      },
-      [h('span', { style: primaryTextStyle }, row.spuName)]
-    )
-
-  const renderMetaText = (value?: string) => h('span', { style: secondaryTextStyle }, value || '-')
-
-  const renderStockSummary = (row: InventorySpuRowState) =>
-    h('div', { class: 'flex flex-col text-left' }, [
-      h('div', formatNumber(row.totalAvailableStock)),
-      h('div', { class: 'text-xs text-g-500' }, `锁定 ${formatNumber(row.totalLockStock)}`)
-    ])
-
-  const renderIssueSummary = (row: InventorySpuRowState) => {
-    const nodes = [
-      row.warningSkuCount > 0
-        ? h(ElTag, { type: 'warning', effect: 'plain' }, () => `预警 ${row.warningSkuCount}`)
-        : null,
-      row.emptySkuCount > 0
-        ? h(ElTag, { type: 'danger', effect: 'plain' }, () => `缺货 ${row.emptySkuCount}`)
-        : null,
-      row.presaleSkuCount > 0
-        ? h(ElTag, { type: 'success', effect: 'plain' }, () => `预售 ${row.presaleSkuCount}`)
-        : null
-    ].filter(Boolean)
-
-    if (!nodes.length) {
-      return h('span', { class: 'text-xs text-g-500' }, '暂无异常')
-    }
-
-    return h('div', { class: 'flex flex-wrap justify-start gap-2' }, nodes)
-  }
-
-  const renderOperationCell = (row: InventorySpuRowState) =>
-    h('div', { class: 'flex items-center justify-start gap-2' }, [
-      h(ArtButtonTable, {
-        type: 'add',
-        iconClass: 'ease-table-action ease-table-action--add',
-        onClick: () => openCreateDialog(row)
-      }),
-      h(ArtButtonTable, {
-        type: 'view',
-        iconClass: 'ease-table-action ease-table-action--view',
-        onClick: () => router.push(`/product/spu/detail/${row.spuId}`)
-      })
-    ])
 
   const buildSearchParams = () => ({
-    keyword: searchForm.value.keyword,
-    brandId: searchForm.value.brandId,
-    categoryId: searchForm.value.categoryId,
-    stockStatus: searchForm.value.stockStatus,
-    lowStockWarning: searchForm.value.lowStockWarning,
-    tab: 'all' as const
+    keyword: searchForm.value.keyword?.trim() || undefined,
+    brandId: toOptionalNumber(searchForm.value.brandId),
+    categoryId: searchForm.value.categoryId?.length
+      ? searchForm.value.categoryId[searchForm.value.categoryId.length - 1]
+      : undefined,
+    stockStatus: toOptionalNumber(searchForm.value.stockStatus) as StockStatus | undefined,
+    lowStockWarning: searchForm.value.lowStockWarning || undefined,
+    tab: activeTab.value
   })
 
-  const mapInventorySpuRowState = (row: InventorySpuRow): InventorySpuRowState => ({
-    ...row,
-    records: [],
-    recordsLoaded: false,
-    recordsLoading: false
-  })
+  const syncOrigin = (rows: InventorySkuRow[]) => {
+    originBySkuId.value = new Map(
+      rows.map((row) => [
+        row.skuId,
+        {
+          stock: row.stock,
+          lowStock: row.lowStock,
+          stockStatus: row.stockStatus
+        }
+      ])
+    )
+  }
 
   const {
     columns,
@@ -313,7 +225,6 @@
     pagination,
     getData,
     replaceSearchParams,
-    resetSearchParams,
     handleSizeChange,
     handleCurrentChange,
     refreshData
@@ -322,226 +233,239 @@
       apiFn: fetchStockPage,
       apiParams: {
         current: 1,
-        size: 10
+        size: 20
       },
+      immediate: false,
       columnsFactory: () => [
         {
-          prop: 'expandTrigger',
-          label: '',
-          width: 56,
-          formatter: (row: any) => renderSpuExpandTrigger(row as InventorySpuRowState)
+          type: 'selection',
+          width: 56
         },
         {
-          prop: 'spuImage',
-          label: '商品图片',
-          width: 96,
-          formatter: (row: any) => renderSpuImageCell(row as InventorySpuRowState)
+          type: 'index',
+          width: 68,
+          label: '序号'
         },
         {
-          prop: 'spuInfo',
-          label: '商品名称',
+          prop: 'spuName',
+          label: '商品信息',
           minWidth: 240,
-          formatter: (row: any) => renderSpuNameCell(row as InventorySpuRowState)
+          formatter: (row) => renderProductInfoCell(row)
         },
         {
-          prop: 'brandName',
-          label: '品牌',
-          minWidth: 140,
-          formatter: (row: any) => renderMetaText(row.brandName)
+          prop: 'skuCode',
+          label: 'SKU 编码',
+          minWidth: 160,
+          formatter: (row) => row.skuCode || '-'
         },
         {
-          prop: 'categoryName',
-          label: '分类',
-          minWidth: 140,
-          formatter: (row: any) => renderMetaText(row.categoryName)
-        },
-        {
-          prop: 'skuCount',
-          label: 'SKU 数',
-          width: 100
-        },
-        {
-          prop: 'totalSale',
+          prop: 'sale',
           label: '销量',
-          width: 110,
-          formatter: (row: any) => formatNumber(row.totalSale)
+          width: 100,
+          formatter: (row) => formatNumber(row.sale)
         },
         {
           prop: 'stock',
-          label: '可售 / 锁定',
+          label: '可售库存',
           width: 150,
-          formatter: (row: any) => renderStockSummary(row as InventorySpuRowState)
+          formatter: (row) => renderStockInput(row)
         },
         {
-          prop: 'issue',
-          label: '异常 SKU',
-          width: 180,
-          formatter: (row: any) => renderIssueSummary(row as InventorySpuRowState)
+          prop: 'lockStock',
+          label: '锁定库存',
+          width: 112,
+          formatter: (row) => formatNumber(row.lockStock)
+        },
+        {
+          prop: 'lowStock',
+          label: '低库存预警',
+          width: 150,
+          formatter: (row) => renderLowStockInput(row)
         },
         {
           prop: 'operation',
           label: '操作',
-          width: 120,
+          width: 112,
           fixed: 'right',
-          formatter: (row: any) => renderOperationCell(row as InventorySpuRowState)
-        },
-        {
-          type: 'expand',
-          width: 0,
-          className: 'inventory-page__expand-holder',
-          labelClassName: 'inventory-page__expand-holder',
-          formatter: (row: any) =>
-            h(InventorySpuExpand, {
-              rows: row.records,
-              loading: row.recordsLoading,
-              isDirty: isRowDirty,
-              onStockChange: (sku: InventorySkuRow) => handleSkuStockChange(sku),
-              onLog: (sku: InventorySkuRow) => openLogDrawer(sku, row),
-              onSave: (sku: InventorySkuRow) => handleSaveSku(sku),
-              onDelete: (sku: InventorySkuRow) => handleDeleteSku(sku)
-            })
+          formatter: (row) => renderOperationCell(row)
         }
       ]
     },
-    transform: {
-      dataTransformer: (rows) => rows.map(mapInventorySpuRowState)
+    hooks: {
+      onSuccess: (rows) => syncOrigin(rows as InventorySkuRow[])
     }
   })
-
-  const inventoryRows = computed(() => data.value as InventorySpuRowState[])
 
   const isRowDirty = (row: InventorySkuRow) => {
     const origin = originBySkuId.value.get(row.skuId)
     if (!origin) return false
-    return origin.stock !== row.stock || origin.lowStock !== row.lowStock
-  }
-
-  const syncOrigin = () => {
-    originBySkuId.value = new Map(
-      inventoryRows.value.flatMap((row) =>
-        row.records.map(
-          (item) =>
-            [
-              item.skuId,
-              {
-                stock: item.stock,
-                lowStock: item.lowStock
-              }
-            ] as const
-        )
-      )
+    return (
+      origin.stock !== row.stock ||
+      origin.lowStock !== row.lowStock ||
+      origin.stockStatus !== row.stockStatus
     )
   }
 
-  const loadFilterOptions = async () => {
-    filterOptions.value = await fetchStockFilterOptions()
+  const isSavingSku = (skuId: number) =>
+    batchSaving.value || statusBatchLoading.value || savingSkuIds.value.includes(skuId)
+
+  const markSaving = (skuId: number, saving: boolean) => {
+    if (saving) {
+      if (!savingSkuIds.value.includes(skuId)) {
+        savingSkuIds.value = [...savingSkuIds.value, skuId]
+      }
+      return
+    }
+
+    savingSkuIds.value = savingSkuIds.value.filter((item) => item !== skuId)
+  }
+
+  const clearSelection = () => {
+    selectedSkuIds.value = []
+    tableRef.value?.elTableRef?.clearSelection?.()
+  }
+
+  const createUpdatePayload = (row: InventorySkuRow): UpdateStockPayload => ({
+    id: Number(row.id || 0),
+    skuId: row.skuId,
+    spuId: row.spuId,
+    stock: row.stock,
+    lowStock: row.lowStock,
+    stockStatus: row.stockStatus
+  })
+
+  function renderProductInfoCell(row: InventorySkuRow) {
+    const specsText = formatSpecs(row.specs) || '默认规格'
+
+    return h('div', { class: 'flex items-center gap-3 min-w-0' }, [
+      row.pic
+        ? h(ElImage, {
+            src: row.pic,
+            fit: 'cover',
+            class: 'size-10 rounded-lg shrink-0',
+            previewSrcList: [row.pic],
+            previewTeleported: true
+          })
+        : h(
+            'div',
+            {
+              class:
+                'size-10 shrink-0 rounded-lg bg-[var(--el-fill-color-light)] text-xs text-g-500 flex items-center justify-center'
+            },
+            '暂无图片'
+          ),
+      h('div', { class: 'min-w-0 flex-1 flex flex-col gap-1' }, [
+        h(
+          'button',
+          {
+            type: 'button',
+            class: 'min-w-0 cursor-pointer truncate text-left font-medium text-g-900',
+            onClick: () => router.push(`/product/spu/detail/${row.spuId}`)
+          },
+          row.spuName || '-'
+        ),
+        h(
+          'div',
+          { class: 'min-w-0 truncate text-xs text-g-500' },
+          `${specsText} · ${row.categoryName || '未分类'}`
+        )
+      ])
+    ])
+  }
+
+  function handleStockValueChange(row: InventorySkuRow, value: unknown) {
+    row.stock = normalizeIntegerInput(value)
+    if (row.stock <= 0 && row.stockStatus !== 2) {
+      row.stockStatus = 0
+    }
+    if (row.stock > 0 && row.stockStatus === 0) {
+      row.stockStatus = 1
+    }
+  }
+
+  function renderStockInput(row: InventorySkuRow) {
+    return h(ElInput, {
+      modelValue: String(row.stock ?? 0),
+      class: 'w-full',
+      disabled: isSavingSku(row.skuId),
+      inputmode: 'numeric',
+      'onUpdate:modelValue': (value: unknown) => handleStockValueChange(row, value)
+    })
+  }
+
+  function renderLowStockInput(row: InventorySkuRow) {
+    return h(ElInput, {
+      modelValue: String(row.lowStock ?? 0),
+      class: 'w-full',
+      disabled: isSavingSku(row.skuId),
+      inputmode: 'numeric',
+      'onUpdate:modelValue': (value: unknown) => {
+        row.lowStock = normalizeIntegerInput(value)
+      }
+    })
+  }
+
+  function renderOperationCell(row: InventorySkuRow) {
+    return h('div', { class: 'flex items-center gap-2 max-md:gap-1.5' }, [
+      h(ArtButtonTable, {
+        icon: 'ri:file-list-3-line',
+        iconClass: 'ease-table-action ease-table-action--view',
+        onClick: () => openLogDrawer(row)
+      }),
+      h(ArtButtonTable, {
+        type: 'edit',
+        iconClass: isRowDirty(row)
+          ? 'ease-table-action ease-table-action--edit'
+          : 'ease-table-action ease-table-action--edit opacity-45',
+        onClick: () => handleSaveSku(row)
+      })
+    ])
+  }
+
+  const loadBaseOptions = async () => {
+    const [options, categories] = await Promise.all([
+      fetchStockFilterOptions(),
+      fetchCategoryTree()
+    ])
+    filterOptions.value = options
+    categoryTree.value = categories || []
+
+    const currentTabs = new Set(
+      (filterOptions.value.tabs.length ? filterOptions.value.tabs : DEFAULT_TABS).map((item) =>
+        String(item.value)
+      )
+    )
+
+    if (!currentTabs.has(activeTab.value)) {
+      activeTab.value = currentTabs.has('all')
+        ? 'all'
+        : (String((filterOptions.value.tabs[0] || DEFAULT_TABS[0]).value) as InventoryTab)
+    }
   }
 
   const refreshAll = async () => {
+    clearSelection()
     await refreshData()
   }
 
   const handleSearch = async () => {
+    clearSelection()
     replaceSearchParams(buildSearchParams())
     await getData()
   }
 
-  const handleResetSearch = async () => {
-    resetSearchParams()
-    searchForm.value = {
-      keyword: undefined,
-      brandId: undefined,
-      categoryId: undefined,
-      stockStatus: undefined,
-      lowStockWarning: false
-    }
-    replaceSearchParams(buildSearchParams())
-    await getData()
+  const handleSelectionChange = (selection: InventorySkuRow[]) => {
+    selectedSkuIds.value = selection.map((item) => item.skuId)
   }
 
-  const handleSkuStockChange = (row: InventorySkuRow) => {
-    row.stockStatus = row.stock > 0 ? (row.stockStatus === 2 ? 2 : 1) : 0
-  }
+  const getRowClassName = ({ row }: { row: InventorySkuRow }) =>
+    selectedSkuIds.value.includes(row.skuId) ? 'product-inventory-page__table-row--selected' : ''
 
-  const ensureExpanded = (spuId: number) => {
-    const key = String(spuId)
-    if (expandedRowKeys.value.includes(key)) return
-    expandedRowKeys.value = [...expandedRowKeys.value, key]
-  }
-
-  const collapseExpanded = (spuId: number) => {
-    expandedRowKeys.value = expandedRowKeys.value.filter((id) => id !== String(spuId))
-  }
-
-  const ensureSpuRecords = async (row: InventorySpuRowState, force = false) => {
-    if (!force && (row.recordsLoaded || row.recordsLoading)) return
-    row.recordsLoading = true
-
-    try {
-      row.records = await fetchStockBySpuId(row.spuId)
-      row.recordsLoaded = true
-      syncOrigin()
-    } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : '加载 SKU 库存失败')
-    } finally {
-      row.recordsLoading = false
-    }
-  }
-
-  const expandSpuRow = async (row: InventorySpuRowState, force = false) => {
-    ensureExpanded(row.spuId)
-    await ensureSpuRecords(row, force)
-  }
-
-  const reloadSpuRowRecords = async (spuId: number) => {
-    const target = inventoryRows.value.find((item) => item.spuId === spuId)
-    if (!target) return null
-
-    target.recordsLoaded = false
-    target.records = []
-    await expandSpuRow(target, true)
-    return target
-  }
-
-  const handleExpandChange = async (
-    row: InventorySpuRowState,
-    expandedRows: InventorySpuRowState[]
-  ) => {
-    const expanded = expandedRows.some((item) => item.spuId === row.spuId)
-    if (!expanded) {
-      collapseExpanded(row.spuId)
-      return
-    }
-
-    await expandSpuRow(row)
-  }
-
-  const isInteractiveTarget = (target: EventTarget | null) => {
-    if (!(target instanceof HTMLElement)) return false
-    return Boolean(
-      target.closest(
-        'button, a, input, textarea, .el-input-number, .el-input, .el-select, .el-checkbox, .el-table__expand-icon'
-      )
-    )
-  }
-
-  const handleRowClick = async (row: InventorySpuRowState, _column: unknown, event: Event) => {
-    if (isInteractiveTarget(event.target)) return
-    if (expandedRowKeys.value.includes(String(row.spuId))) {
-      collapseExpanded(row.spuId)
-      return
-    }
-    await expandSpuRow(row)
-  }
-
-  const openLogDrawer = async (
-    sku: InventorySkuRow,
-    row?: Pick<InventorySpuRowState, 'spuName' | 'brandName'>
-  ) => {
+  const openLogDrawer = async (sku: InventorySkuRow) => {
     activeLogSku.value = {
       ...sku,
-      spuName: row?.spuName,
-      brandName: row?.brandName
+      spuName: sku.spuName,
+      brandName: sku.brandName
     }
     logDrawerVisible.value = true
     logLoading.value = true
@@ -554,134 +478,65 @@
   }
 
   const handleSaveSku = async (row: InventorySkuRow) => {
-    await updateStock({
-      id: Number(row.id || 0),
-      skuId: row.skuId,
-      spuId: row.spuId,
-      stock: row.stock,
-      lowStock: row.lowStock,
-      stockStatus: row.stockStatus
-    })
+    if (!isRowDirty(row) || isSavingSku(row.skuId)) return
 
-    await reloadSpuRowRecords(row.spuId)
-  }
+    markSaving(row.skuId, true)
 
-  const handleDeleteSku = async (row: InventorySkuRow) => {
-    await ElMessageBox.confirm(`确定删除 SKU “${row.skuCode}”吗？`, '删除确认', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-
-    await deleteSku(row.skuId)
-    await reloadSpuRowRecords(row.spuId)
-    await refreshAll()
-  }
-
-  const resetCreateForm = () => {
-    createForm.skuId = undefined
-    createForm.stock = 0
-    createForm.lowStock = 0
-    createForm.stockStatus = 0
-  }
-
-  const openCreateDialog = async (row: InventorySpuRowState) => {
-    activeCreateSpu.value = row
-    createDialogVisible.value = true
-    resetCreateForm()
-
-    if (!row.recordsLoaded && !row.recordsLoading) {
-      await ensureSpuRecords(row)
-    }
-
-    const candidates = await fetchSkuBySpuId(row.spuId)
-    const existingIds = new Set(row.records.map((item) => item.skuId))
-    createSkuCandidates.value = candidates.filter((item) => !existingIds.has(item.id))
-  }
-
-  const handleSubmitCreateStock = async (payload: CreateInventoryForm) => {
-    if (!activeCreateSpu.value || !payload.skuId) return
-
-    creatingStock.value = true
     try {
-      await createStock({
-        skuId: payload.skuId,
-        spuId: activeCreateSpu.value.spuId,
-        stock: payload.stock,
-        lowStock: payload.lowStock,
-        stockStatus: payload.stockStatus
-      } satisfies CreateStockPayload)
-
-      createDialogVisible.value = false
-      await Promise.all([reloadSpuRowRecords(activeCreateSpu.value.spuId), refreshAll()])
+      await updateStock(createUpdatePayload(row))
+      clearSelection()
+      await refreshData()
     } finally {
-      creatingStock.value = false
+      markSaving(row.skuId, false)
     }
   }
 
-  const handleCreateDialogClosed = () => {
-    activeCreateSpu.value = null
-    createSkuCandidates.value = []
-    resetCreateForm()
+  const handleBatchStatusUpdate = async (stockStatus: StockStatus) => {
+    if (!selectedRows.value.length || statusBatchLoading.value) return
+
+    const action = STATUS_ACTIONS.find((item) => item.value === stockStatus)
+    if (!action) return
+
+    await ElMessageBox.confirm(
+      `确定将已选中的 ${selectedRows.value.length} 个 SKU ${action.label.replace('批量', '')}吗？`,
+      action.confirmTitle,
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    statusBatchLoading.value = true
+
+    try {
+      await updateStockStatusBatch({
+        skuIds: selectedRows.value.map((item) => item.skuId),
+        stockStatus
+      })
+      await refreshAll()
+    } finally {
+      statusBatchLoading.value = false
+    }
   }
 
-  watch(
-    inventoryRows,
-    async (rows) => {
-      const expandedRows = rows.filter((row) => expandedRowKeys.value.includes(String(row.spuId)))
-      if (!expandedRows.length) return
-
-      for (const row of expandedRows) {
-        if (!row.recordsLoaded && !row.recordsLoading) {
-          await ensureSpuRecords(row)
-        }
-      }
-    },
-    { flush: 'post' }
-  )
-
-  onMounted(async () => {
-    await loadFilterOptions()
+  watch(activeTab, async () => {
+    clearSelection()
     replaceSearchParams(buildSearchParams())
     await getData()
   })
+
+  onMounted(async () => {
+    try {
+      await loadBaseOptions()
+      replaceSearchParams(buildSearchParams())
+      await getData()
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : '加载库存列表失败')
+    }
+  })
+
+  onActivated(() => {
+    void refreshAll()
+  })
 </script>
-
-<style scoped lang="scss">
-  .inventory-page__toolbar-top {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .inventory-page__toolbar-top :deep(.inventory-summary-cards) {
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-  }
-
-  :deep(.inventory-page__expand-holder) {
-    width: 0 !important;
-    min-width: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-  }
-
-  :deep(.inventory-page__expand-holder .cell) {
-    display: none !important;
-    width: 0 !important;
-    min-width: 0 !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-  }
-
-  :deep(.inventory-page__expand-holder .el-table__expand-icon) {
-    display: none !important;
-  }
-
-  :deep(.el-table__expanded-cell) {
-    padding: 0 !important;
-    background: transparent !important;
-    border-bottom: 0 !important;
-  }
-</style>

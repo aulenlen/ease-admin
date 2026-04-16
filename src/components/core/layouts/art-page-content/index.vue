@@ -14,26 +14,17 @@
       </div>
     </div>
 
-    <RouterView v-if="isRefresh" v-slot="{ Component, route }" :style="contentStyle">
-      <!-- 缓存路由动画 -->
+    <RouterView v-if="isRefresh" v-slot="{ Component, route: currentRoute }" :style="contentStyle">
       <Transition :name="showTransitionMask ? '' : actualTransition" mode="out-in" appear>
-        <KeepAlive :max="10" :exclude="keepAliveExclude">
-          <component
-            class="art-page-view"
-            :is="Component"
-            :key="route.path"
-            v-if="route.meta.keepAlive"
-          />
+        <KeepAlive v-if="currentRoute.meta.keepAlive" :max="10" :exclude="keepAliveExclude">
+          <component :is="Component" :key="getRouteViewKey(currentRoute)" class="art-page-view" />
         </KeepAlive>
-      </Transition>
 
-      <!-- 非缓存路由动画 -->
-      <Transition :name="showTransitionMask ? '' : actualTransition" mode="out-in" appear>
         <component
-          class="art-page-view"
+          v-else
           :is="Component"
-          :key="route.path"
-          v-if="!route.meta.keepAlive"
+          :key="getRouteViewKey(currentRoute)"
+          class="art-page-view"
         />
       </Transition>
     </RouterView>
@@ -49,6 +40,7 @@
 </template>
 <script setup lang="ts">
   import type { CSSProperties } from 'vue'
+  import type { RouteLocationNormalizedLoaded } from 'vue-router'
   import { useRoute } from 'vue-router'
   import { useAutoLayoutHeight } from '@/hooks/core/useLayoutHeight'
   import { useSettingStore } from '@/store/modules/setting'
@@ -116,6 +108,10 @@
       minHeight: containerMinHeight.value
     })
   )
+
+  const getRouteViewKey = (currentRoute: RouteLocationNormalizedLoaded): string => {
+    return String(currentRoute.fullPath || currentRoute.path || currentRoute.name || '')
+  }
 
   const reload = () => {
     isRefresh.value = false

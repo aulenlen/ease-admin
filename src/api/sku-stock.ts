@@ -7,7 +7,7 @@ export type InventoryTab = 'all' | 'warning' | 'empty' | 'presale'
 export type StockStatus = 0 | 1 | 2
 
 export interface OptionItem {
-  value: string
+  value: string | number
   label: string
 }
 
@@ -28,34 +28,6 @@ export interface StockPageQuery {
   tab?: InventoryTab
 }
 
-export interface InventorySpuRow {
-  spuId: number
-  spuName: string
-  pic?: string
-  brandName: string
-  categoryName: string
-  skuCount: number
-  totalAvailableStock: number
-  totalLockStock: number
-  totalSale: number
-  warningSkuCount: number
-  emptySkuCount: number
-  presaleSkuCount: number
-}
-
-export interface InventorySummary {
-  spuCount: number
-  skuCount: number
-  warningSpuCount: number
-  emptySpuCount: number
-  presaleSpuCount: number
-}
-
-export interface InventoryStats {
-  summary: InventorySummary
-  tabTotals: Record<InventoryTab, number>
-}
-
 export interface InventoryFilterOptions {
   brands: OptionItem[]
   categories: OptionItem[]
@@ -67,8 +39,13 @@ export interface InventorySkuRow {
   id?: number
   skuId: number
   spuId: number
+  spuName: string
   skuCode: string
   pic?: string
+  brandId?: number
+  brandName?: string
+  categoryId?: number
+  categoryName?: string
   stock: number
   lockStock: number
   sale: number
@@ -116,47 +93,51 @@ export interface UpdateStockPayload extends CreateStockPayload {
   id: number
 }
 
-interface PageRespVO<T> {
-  pageNum: number
-  pageSize: number
-  totalPage: number
-  total: number
-  list: T[]
+export interface UpdateStockStatusBatchPayload {
+  skuIds: number[]
+  stockStatus: StockStatus
 }
 
-interface InventorySpuRespVO {
-  spuId: number
-  spuName: string
-  pic?: string
-  brandName?: string
-  categoryName?: string
-  skuCount?: number
-  totalAvailableStock?: number
-  totalLockStock?: number
-  totalSale?: number
-  warningSkuCount?: number
-  emptySkuCount?: number
-  presaleSkuCount?: number
+interface PageRespVO<T> {
+  pageNum?: number
+  pageSize?: number
+  totalPage?: number
+  total?: number
+  list?: T[]
+  records?: T[]
 }
 
 interface InventorySkuRespVO {
   id?: number
-  skuId: number
-  spuId: number
+  stockId?: number
+  skuId?: number
+  spuId?: number
   skuCode?: string
+  code?: string
+  spuName?: string
+  productName?: string
+  name?: string
   pic?: string
+  skuPic?: string
+  spuPic?: string
+  brandId?: number
+  brandName?: string
+  categoryId?: number
+  categoryName?: string
   stock?: number
+  availableStock?: number
   lockStock?: number
+  lockedStock?: number
   sale?: number
+  saleStock?: number
   lowStock?: number
+  warningStock?: number
+  warningValue?: number
   stockStatus?: StockStatus
   attrValues?: string
   attrValuesObj?: SpecItem[]
-}
-
-interface InventoryStatsRespVO {
-  summary?: Partial<InventorySummary>
-  tabTotals?: Partial<Record<InventoryTab, number>>
+  specs?: SpecItem[]
+  spData?: string
 }
 
 interface InventoryFilterOptionsRespVO {
@@ -179,8 +160,8 @@ function normalizeSpecs(specs?: string | SpecItem[]): SpecItem[] {
   if (Array.isArray(specs)) {
     return specs.map((item) => ({
       attrId: item.attrId,
-      attrName: String(item.attrName || '').trim(),
-      attrValue: String(item.attrValue || '').trim()
+      attrName: String(item.attrName || '').trim() || undefined,
+      attrValue: String(item.attrValue || '').trim() || undefined
     }))
   }
 
@@ -191,7 +172,7 @@ function normalizeSpecs(specs?: string | SpecItem[]): SpecItem[] {
     const parsed = JSON.parse(rawText)
     return Array.isArray(parsed) ? normalizeSpecs(parsed as SpecItem[]) : []
   } catch {
-    return []
+    return [{ attrValue: rawText }]
   }
 }
 
@@ -208,83 +189,47 @@ function buildStockQuery(params: StockPageQuery) {
   }
 }
 
-function toInventorySpuRow(item: InventorySpuRespVO): InventorySpuRow {
-  return {
-    spuId: item.spuId,
-    spuName: String(item.spuName || ''),
-    pic: item.pic,
-    brandName: String(item.brandName || '-'),
-    categoryName: String(item.categoryName || '-'),
-    skuCount: Number(item.skuCount || 0),
-    totalAvailableStock: Number(item.totalAvailableStock || 0),
-    totalLockStock: Number(item.totalLockStock || 0),
-    totalSale: Number(item.totalSale || 0),
-    warningSkuCount: Number(item.warningSkuCount || 0),
-    emptySkuCount: Number(item.emptySkuCount || 0),
-    presaleSkuCount: Number(item.presaleSkuCount || 0)
-  }
-}
-
 function toInventorySkuRow(item: InventorySkuRespVO): InventorySkuRow {
-  return {
-    id: item.id,
-    skuId: item.skuId,
-    spuId: item.spuId,
-    skuCode: String(item.skuCode || item.skuId),
-    pic: item.pic,
-    stock: Number(item.stock || 0),
-    lockStock: Number(item.lockStock || 0),
-    sale: Number(item.sale || 0),
-    lowStock: Number(item.lowStock || 0),
-    stockStatus: Number(item.stockStatus ?? 0) as StockStatus,
-    specs: normalizeSpecs(item.attrValuesObj || item.attrValues)
-  }
-}
+  const stock = Number(item.stock ?? item.availableStock ?? 0)
+  const lowStock = Number(item.lowStock ?? item.warningStock ?? item.warningValue ?? 0)
 
-function toInventoryStats(data?: InventoryStatsRespVO): InventoryStats {
   return {
-    summary: {
-      spuCount: Number(data?.summary?.spuCount || 0),
-      skuCount: Number(data?.summary?.skuCount || 0),
-      warningSpuCount: Number(data?.summary?.warningSpuCount || 0),
-      emptySpuCount: Number(data?.summary?.emptySpuCount || 0),
-      presaleSpuCount: Number(data?.summary?.presaleSpuCount || 0)
-    },
-    tabTotals: {
-      all: Number(data?.tabTotals?.all || 0),
-      warning: Number(data?.tabTotals?.warning || 0),
-      empty: Number(data?.tabTotals?.empty || 0),
-      presale: Number(data?.tabTotals?.presale || 0)
-    }
+    id: item.id ?? item.stockId,
+    skuId: Number(item.skuId ?? item.id ?? 0),
+    spuId: Number(item.spuId ?? 0),
+    spuName: String(item.spuName || item.productName || item.name || '-'),
+    skuCode: String(item.skuCode || item.code || item.skuId || item.id || '-'),
+    pic: item.pic || item.skuPic || item.spuPic,
+    brandId: item.brandId,
+    brandName: item.brandName,
+    categoryId: item.categoryId,
+    categoryName: item.categoryName,
+    stock,
+    lockStock: Number(item.lockStock ?? item.lockedStock ?? 0),
+    sale: Number(item.sale ?? item.saleStock ?? 0),
+    lowStock,
+    stockStatus: Number(item.stockStatus ?? (stock > 0 ? 1 : 0)) as StockStatus,
+    specs: normalizeSpecs(item.attrValuesObj || item.specs || item.attrValues || item.spData)
   }
 }
 
 export function fetchStockPage(params: StockPageQuery) {
   return request
-    .get<PageRespVO<InventorySpuRespVO>>({
+    .get<PageRespVO<InventorySkuRespVO>>({
       url: STOCK_BASE_PATH,
       params: buildStockQuery(params)
     })
-    .then((response) => ({
-      records: (response.list || []).map(toInventorySpuRow),
-      current: Number(response.pageNum || 1),
-      size: Number(response.pageSize || 10),
-      total: Number(response.total || 0),
-      totalPage: Number(response.totalPage || 0)
-    }))
-}
+    .then((response) => {
+      const list = response.list || response.records || []
 
-export function fetchStockStats(params: Partial<StockPageQuery>) {
-  return request
-    .get<InventoryStatsRespVO>({
-      url: `${STOCK_BASE_PATH}/stats`,
-      params: buildStockQuery({
-        current: Number(params.current || 1),
-        size: Number(params.size || 10),
-        ...params
-      })
+      return {
+        records: list.map(toInventorySkuRow),
+        current: Number(response.pageNum || params.current || 1),
+        size: Number(response.pageSize || params.size || 10),
+        total: Number(response.total || 0),
+        totalPage: Number(response.totalPage || 0)
+      }
     })
-    .then(toInventoryStats)
 }
 
 export function fetchStockFilterOptions() {
@@ -300,18 +245,29 @@ export function fetchStockFilterOptions() {
     }))
 }
 
-export function fetchStockBySpuId(spuId: number) {
-  return request
-    .get<InventorySkuRespVO[]>({
-      url: `${STOCK_BASE_PATH}/by-spu/${spuId}`
-    })
-    .then((list) => (list || []).map(toInventorySkuRow))
-}
-
 export function updateStock(payload: UpdateStockPayload) {
   return request.put<number>({
     url: STOCK_BASE_PATH,
     data: payload,
+    showSuccessMessage: true
+  })
+}
+
+export function updateStockBatch(payload: UpdateStockPayload[]) {
+  return request.put<number>({
+    url: `${STOCK_BASE_PATH}/batch`,
+    data: payload,
+    showSuccessMessage: true
+  })
+}
+
+export function updateStockStatusBatch(payload: UpdateStockStatusBatchPayload) {
+  return request.put<number>({
+    url: `${STOCK_BASE_PATH}/status`,
+    params: {
+      skuIds: payload.skuIds,
+      stockStatus: payload.stockStatus
+    },
     showSuccessMessage: true
   })
 }
@@ -334,7 +290,7 @@ export function fetchStockLogs(skuId: number) {
         skuId
       }
     })
-    .then((response) => response.list || [])
+    .then((response) => response.list || response.records || [])
 }
 
 export function fetchSkuBySpuId(spuId: number) {
@@ -352,11 +308,4 @@ export function fetchSkuBySpuId(spuId: number) {
         enableStatus: Number(item.enableStatus ?? 1) as 0 | 1
       }))
     )
-}
-
-export function deleteSku(id: number) {
-  return request.del<number>({
-    url: `${SKU_BASE_PATH}/${id}`,
-    showSuccessMessage: true
-  })
 }
