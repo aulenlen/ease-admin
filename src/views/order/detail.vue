@@ -1,7 +1,7 @@
 <template>
   <div class="art-full-height flex flex-col gap-4" v-loading="pageLoading">
     <div>
-      <ElButton @click="router.push('/order')">返回订单列表</ElButton>
+      <ElButton @click="router.push('/order/list')">返回订单列表</ElButton>
     </div>
 
     <ElEmpty v-if="!pageLoading && !detail" description="未找到订单" />
