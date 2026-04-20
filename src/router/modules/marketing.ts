@@ -59,6 +59,26 @@ export const marketingRoutes: AppRouteRecord = {
         isHide: true,
         activePath: '/marketing/content'
       }
+    },
+    {
+      path: 'content/placements',
+      name: 'MarketingPlacement',
+      component: '/marketing/content/placement/index',
+      meta: {
+        title: '内容位配置',
+        icon: 'ri:apps-2-line',
+        keepAlive: true
+      }
+    },
+    {
+      path: 'content/placements/edit/:id',
+      name: 'MarketingPlacementEdit',
+      component: '/marketing/content/placement/editor',
+      meta: {
+        title: '槽位配置',
+        isHide: true,
+        activePath: '/marketing/content/placements'
+      }
     }
   ]
 }
