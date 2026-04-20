@@ -72,16 +72,19 @@ export function parseFlashAttrValues(attrValues?: string | null): FlashAttrValue
   }
 }
 
-export function formatFlashAttrValues(attrValues?: string | null) {
-  const parsed = parseFlashAttrValues(attrValues)
-  if (!parsed.length) {
-    return String(attrValues || '').trim() || '-'
-  }
-
-  return parsed
-    .map((item) => [item.attrName, item.attrValue].filter(Boolean).join('：'))
+export function formatFlashAttrValueList(list?: FlashAttrValueItem[] | null) {
+  const text = (list || [])
+    .map((item) => String(item.attrValue || '').trim())
     .filter(Boolean)
     .join(' · ')
+
+  return text || '默认规格'
+}
+
+export function formatFlashAttrValues(attrValues?: string | null) {
+  const parsed = parseFlashAttrValues(attrValues)
+  if (parsed.length) return formatFlashAttrValueList(parsed)
+  return String(attrValues || '').trim() || '默认规格'
 }
 
 export function formatFlashSessionRange(

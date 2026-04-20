@@ -145,7 +145,7 @@
   } from '@/api/spu'
   import EaseTableSearch from '@/components/project/ease-table-search/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
-  import type { SelectedFlashSku } from './flash-utils'
+  import { formatFlashAttrValueList, type SelectedFlashSku } from './flash-utils'
 
   interface Props {
     modelValue: boolean
@@ -264,13 +264,7 @@
 
   const formatMoney = (value: number) => `¥${Number(value || 0).toFixed(2)}`
 
-  const formatSkuSpecs = (list: AttrValueItem[]) => {
-    const text = list
-      .map((item) => item.attrValue)
-      .filter(Boolean)
-      .join('·')
-    return text || '默认规格'
-  }
+  const formatSkuSpecs = (list: AttrValueItem[]) => formatFlashAttrValueList(list)
 
   const isSpuFullySelected = (spuId: number) => {
     const spu = spuList.value.find((item) => item.id === spuId)

@@ -127,6 +127,7 @@
 <script setup lang="ts">
   import type { FlashProductItem } from '@/api/flash'
   import {
+    formatFlashAttrValueList,
     normalizeFlashRouteType,
     parseFlashAttrValues,
     type FlashSkuConfig,
@@ -162,14 +163,8 @@
 
   const formatMoney = (value: number) => `¥${Number(value || 0).toFixed(2)}`
 
-  const formatSpecValues = (list: SelectedFlashSku['attrValuesObj']) => {
-    const text = list
-      .map((item) => [item.attrName, item.attrValue].filter(Boolean).join('：'))
-      .filter(Boolean)
-      .join(' · ')
-
-    return text || '-'
-  }
+  const formatSpecValues = (list: SelectedFlashSku['attrValuesObj']) =>
+    formatFlashAttrValueList(list)
 
   const toCreateRows = (selection: SelectedFlashSku[]): FlashSkuConfig[] =>
     selection.map((sku) => ({

@@ -19,6 +19,16 @@ export const marketingRoutes: AppRouteRecord = {
         icon: 'ri:flashlight-line',
         keepAlive: true
       }
+    },
+    {
+      path: 'flash/edit/:id',
+      name: 'MarketingFlashEdit',
+      component: '/marketing/flash/editor',
+      meta: {
+        title: '秒杀配置',
+        isHide: true,
+        activePath: '/marketing/flash'
+      }
     }
   ]
 }
