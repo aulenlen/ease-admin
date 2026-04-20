@@ -146,7 +146,7 @@
         formData.append(mergedUploadConfig.value.fieldName, file)
 
         const response = await request.post<{ url: string; alt: string; href: string }>({
-          url: props.uploadConfig?.server,
+          url: props.uploadConfig?.server as string,
           data: formData,
           headers: {
             'Content-Type': 'multipart/form-data',

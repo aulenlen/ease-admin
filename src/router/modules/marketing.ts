@@ -29,6 +29,36 @@ export const marketingRoutes: AppRouteRecord = {
         isHide: true,
         activePath: '/marketing/flash'
       }
+    },
+    {
+      path: 'content',
+      name: 'MarketingArticle',
+      component: '/marketing/content/article/index',
+      meta: {
+        title: '文章管理',
+        icon: 'ri:article-line',
+        keepAlive: true
+      }
+    },
+    {
+      path: 'content/create',
+      name: 'MarketingArticleCreate',
+      component: '/marketing/content/article/editor',
+      meta: {
+        title: '新建文章',
+        isHide: true,
+        activePath: '/marketing/content'
+      }
+    },
+    {
+      path: 'content/edit/:id',
+      name: 'MarketingArticleEdit',
+      component: '/marketing/content/article/editor',
+      meta: {
+        title: '编辑文章',
+        isHide: true,
+        activePath: '/marketing/content'
+      }
     }
   ]
 }

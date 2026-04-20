@@ -4,7 +4,7 @@ const MEDIA_FILES_BASE_PATH = '/api/v1/admin/content/media/files'
 
 export interface MediaUploadResponse {
   url: string
-  name: string
+  objectName: string
 }
 
 export function uploadMedia(file: File) {
