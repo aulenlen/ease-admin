@@ -91,21 +91,19 @@
       modal-class="attribute-editor-modal"
       destroy-on-close
     >
-      <div class="max-h-[72vh] overflow-y-auto pr-1">
-        <ElForm label-position="top" class="space-y-3">
-          <div
-            class="rounded-[var(--custom-radius)] border border-[var(--art-card-border)] px-5 py-4"
-          >
-            <section class="space-y-4">
-              <div class="font-medium text-[var(--el-text-color-primary)]">基础信息</div>
+      <div class="attribute-editor">
+        <ElForm label-position="top" class="attribute-editor__form">
+          <section class="attribute-editor__panel">
+            <div class="attribute-editor__section">
+              <div class="attribute-editor__section-title">基础信息</div>
 
-              <ElFormItem label="属性名称" required>
+              <ElFormItem label="属性名称" required class="attribute-editor__form-item">
                 <ElInput v-model.trim="editorForm.name" maxlength="100" class="w-full" />
               </ElFormItem>
 
-              <ElRow :gutter="16">
+              <ElRow :gutter="16" class="attribute-editor__field-row">
                 <ElCol :xs="24" :md="12">
-                  <ElFormItem label="属性类型" required>
+                  <ElFormItem label="属性类型" required class="attribute-editor__form-item">
                     <ElSelect v-model="editorForm.type" class="w-full">
                       <ElOption label="规格" :value="1" />
                       <ElOption label="参数" :value="0" />
@@ -113,41 +111,44 @@
                   </ElFormItem>
                 </ElCol>
                 <ElCol :xs="24" :md="12">
-                  <ElFormItem label="单位">
+                  <ElFormItem label="单位" class="attribute-editor__form-item">
                     <ElInput v-model.trim="editorForm.unit" maxlength="20" class="w-full" />
                   </ElFormItem>
                 </ElCol>
               </ElRow>
 
-              <div class="flex items-center justify-between gap-4">
-                <span class="text-sm text-[var(--el-text-color-primary)]">支持搜索</span>
-                <ElSwitch v-model="searchableValue" />
-              </div>
+              <div class="attribute-editor__switch-list">
+                <div class="attribute-editor__switch-row">
+                  <span>支持搜索</span>
+                  <ElSwitch v-model="searchableValue" />
+                </div>
 
-              <div class="flex items-center justify-between gap-4">
-                <span class="text-sm text-[var(--el-text-color-primary)]">支持筛选</span>
-                <ElSwitch v-model="filterableValue" />
+                <div class="attribute-editor__switch-row">
+                  <span>支持筛选</span>
+                  <ElSwitch v-model="filterableValue" />
+                </div>
               </div>
-            </section>
+            </div>
 
-            <ElFormItem label="录入方式" class="mb-0">
+            <ElFormItem label="录入方式" class="attribute-editor__form-item mb-0">
               <ElRadioGroup v-model="editorForm.entryMethod">
                 <ElRadio :value="1">预设选项</ElRadio>
                 <ElRadio :value="0">手工录入</ElRadio>
               </ElRadioGroup>
             </ElFormItem>
 
-            <section v-if="Number(editorForm.entryMethod) === 1" class="mt-6 space-y-4">
-              <div class="font-medium text-[var(--el-text-color-primary)]">预设选项</div>
+            <section v-if="Number(editorForm.entryMethod) === 1" class="attribute-editor__section">
+              <div class="attribute-editor__section-title">预设选项</div>
 
               <ElFormItem class="mb-0">
                 <OptionTagInput
                   v-model="editorOptionValues"
-                  placeholder="每行一个选项，也支持用逗号分隔"
+                  add-label="添加预设选项"
+                  input-placeholder="输入后按回车或逗号添加预设选项"
                 />
               </ElFormItem>
             </section>
-          </div>
+          </section>
         </ElForm>
       </div>
 
@@ -265,9 +266,8 @@
   })
 
   const renderAttributeName = (row: CategoryAttributePoolItem) =>
-    h('div', [
-      h('div', { class: 'font-medium' }, row.name),
-      h('div', { class: 'mt-1 text-xs text-[var(--el-text-color-secondary)]' }, `#${row.id}`)
+    h('div', { class: 'flex items-center gap-2 min-w-0' }, [
+      h('span', { class: 'truncate font-medium text-[var(--el-text-color-primary)]' }, row.name)
     ])
 
   const renderTypeText = (row: CategoryAttributePoolItem) =>
@@ -301,25 +301,25 @@
     {
       prop: 'name',
       label: '属性',
-      minWidth: 220,
+      width: 180,
       formatter: (row) => renderAttributeName(row)
     },
     {
       prop: 'type',
       label: '类型',
-      width: 90,
+      width: 88,
       formatter: (row) => renderTypeText(row)
     },
     {
       prop: 'entryMethod',
       label: '录入方式',
-      width: 110,
+      width: 96,
       formatter: (row) => renderEntryMethodText(row)
     },
     {
       prop: 'optionList',
       label: '选项',
-      minWidth: 220,
+      minWidth: 360,
       formatter: (row) => renderOptions(row)
     },
     {
@@ -555,5 +555,78 @@
 <style scoped lang="scss">
   :deep(.attribute-editor-modal .el-overlay-dialog) {
     overflow: hidden;
+  }
+
+  .attribute-editor {
+    max-height: 72vh;
+    padding-right: 4px;
+    overflow-y: auto;
+  }
+
+  .attribute-editor__form {
+    color: var(--el-text-color-primary);
+  }
+
+  .attribute-editor__panel {
+    padding: 20px;
+    border: 1px solid var(--art-card-border);
+    border-radius: var(--custom-radius);
+  }
+
+  .attribute-editor__section + .attribute-editor__form-item,
+  .attribute-editor__form-item + .attribute-editor__section {
+    margin-top: 20px;
+  }
+
+  .attribute-editor__section-title {
+    margin-bottom: 16px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--el-text-color-primary);
+  }
+
+  .attribute-editor__field-row {
+    margin-bottom: -6px;
+  }
+
+  .attribute-editor__form-item {
+    margin-bottom: 18px;
+  }
+
+  .attribute-editor__switch-list {
+    display: grid;
+    gap: 2px;
+    margin-top: 2px;
+  }
+
+  .attribute-editor__switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--el-text-color-primary);
+  }
+
+  :deep(.attribute-editor__form .el-form-item__label) {
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--el-text-color-regular);
+  }
+
+  :deep(.attribute-editor__form .el-radio) {
+    height: 28px;
+    margin-right: 24px;
+    font-size: 14px;
+    color: var(--el-text-color-regular);
+  }
+
+  :deep(.attribute-editor__form .el-radio__label) {
+    padding-left: 8px;
+    font-size: 14px;
   }
 </style>

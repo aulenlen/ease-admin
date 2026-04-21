@@ -1,63 +1,83 @@
 <template>
-  <div class="flex flex-col gap-2">
-    <ElInput
-      v-model.trim="innerValue"
-      placeholder="请输入图标编码，如 ri:folder-2-line"
-      @update:model-value="handleInput"
-    >
-      <template #append>
-        <ElPopover
-          v-model:visible="popoverVisible"
-          trigger="click"
-          placement="bottom-end"
-          :width="popoverWidth"
-        >
-          <template #reference>
-            <ElButton text>选择图标</ElButton>
-          </template>
+  <div class="category-icon-picker">
+    <div class="category-icon-picker__preview">
+      <ArtSvgIcon v-if="innerValue" :icon="innerValue" class="category-icon-picker__preview-icon" />
+      <span v-else class="category-icon-picker__preview-placeholder">-</span>
+    </div>
 
-          <div class="flex flex-col gap-4">
-            <ElInput
-              v-model.trim="keyword"
-              clearable
-              placeholder="搜索图标，如 folder / shop / phone"
-            />
-
-            <EaseSegmentTabs v-model="activeGroupKey" :items="groupOptions" />
-
-            <ElScrollbar max-height="320px">
-              <div class="grid grid-cols-5 gap-2 max-md:grid-cols-4">
-                <button
-                  v-for="icon in visibleIcons"
-                  :key="icon"
-                  type="button"
-                  class="flex h-[72px] items-center justify-center gap-1 rounded-[var(--el-border-radius-base)] border border-[var(--el-border-color-lighter)] bg-transparent px-2 text-center transition-[border-color,background-color] duration-200 hover:border-[var(--el-color-primary-light-5)] hover:bg-[var(--el-fill-color-light)]"
-                  @click="selectIcon(icon)"
-                >
-                  <ArtSvgIcon :icon="icon" class="text-lg" />
-                  <span class="w-full truncate text-xs">{{ icon.replace('ri:', '') }}</span>
-                </button>
-              </div>
-            </ElScrollbar>
-
-            <ElEmpty
-              v-if="visibleIcons.length === 0"
-              :image-size="60"
-              description="没有匹配的图标"
-            />
-          </div>
-        </ElPopover>
-      </template>
-    </ElInput>
-
-    <div
-      v-if="innerValue"
-      class="flex items-center gap-2 text-sm text-[var(--el-text-color-secondary)]"
-    >
-      <ArtSvgIcon :icon="innerValue" class="text-lg" />
-      <span>{{ innerValue }}</span>
+    <div class="min-w-0 flex-1">
+      <ElInput
+        v-model.trim="innerValue"
+        placeholder="请输入图标编码，如 ri:folder-2-line"
+        @update:model-value="handleInput"
+      >
+        <template #append>
+          <ElButton text @click="dialogVisible = true">选择图标</ElButton>
+        </template>
+      </ElInput>
     </div>
   </div>
+
+  <ElDialog
+    v-model="dialogVisible"
+    title="选择图标"
+    :width="dialogWidth"
+    align-center
+    append-to-body
+    destroy-on-close
+    class="category-icon-picker__dialog"
+  >
+    <div class="category-icon-picker__dialog-body">
+      <div class="category-icon-picker__toolbar">
+        <div class="category-icon-picker__toolbar-main">
+          <ElInput
+            v-model.trim="keyword"
+            clearable
+            placeholder="搜索图标，如 folder / shop / phone"
+          />
+
+          <div class="category-icon-picker__summary">
+            <div class="category-icon-picker__summary-text">
+              <span>当前分组 {{ visibleIcons.length }} 个图标</span>
+              <span>点击图标后立即选中</span>
+            </div>
+
+            <div v-if="innerValue" class="category-icon-picker__current">
+              <div class="category-icon-picker__current-preview">
+                <ArtSvgIcon :icon="innerValue" class="category-icon-picker__current-icon" />
+              </div>
+              <div class="category-icon-picker__current-text">{{ innerValue }}</div>
+              <ElButton text @click="clearIcon">清空</ElButton>
+            </div>
+          </div>
+        </div>
+
+        <EaseSegmentTabs v-model="activeGroupKey" :items="groupOptions" />
+      </div>
+
+      <ElScrollbar class="category-icon-picker__results">
+        <div class="category-icon-picker__grid">
+          <button
+            v-for="icon in visibleIcons"
+            :key="icon"
+            type="button"
+            :class="['category-icon-picker__grid-item', { 'is-active': icon === innerValue }]"
+            @click="selectIcon(icon)"
+          >
+            <ArtSvgIcon :icon="icon" class="category-icon-picker__grid-icon" />
+            <span class="category-icon-picker__grid-label">{{ icon.replace('ri:', '') }}</span>
+          </button>
+
+          <ElEmpty
+            v-if="visibleIcons.length === 0"
+            :image-size="60"
+            description="没有匹配的图标"
+            class="category-icon-picker__empty"
+          />
+        </div>
+      </ElScrollbar>
+    </div>
+  </ElDialog>
 </template>
 
 <script setup lang="ts">
@@ -86,7 +106,7 @@
 
   const innerValue = ref(props.modelValue)
   const keyword = ref('')
-  const popoverVisible = ref(false)
+  const dialogVisible = ref(false)
   const activeGroupKey = ref('recent')
   const recentIcons = ref<string[]>([])
 
@@ -99,7 +119,7 @@
       value: group.key
     }))
   )
-  const popoverWidth = computed(() => Math.min(520, Math.max(width.value - 48, 280)))
+  const dialogWidth = computed(() => (width.value < 768 ? 'calc(100vw - 24px)' : '720px'))
 
   const visibleIcons = computed(() => {
     const currentGroup =
@@ -141,11 +161,16 @@
     emit('update:modelValue', String(value || '').trim())
   }
 
+  function clearIcon() {
+    innerValue.value = ''
+    emit('update:modelValue', '')
+  }
+
   function selectIcon(icon: string) {
     innerValue.value = icon
     emit('update:modelValue', icon)
     writeRecentIcons(icon)
-    popoverVisible.value = false
+    dialogVisible.value = false
   }
 
   onMounted(() => {
@@ -162,7 +187,7 @@
     }
   )
 
-  watch(popoverVisible, (visible) => {
+  watch(dialogVisible, (visible) => {
     if (!visible) return
     keyword.value = ''
     if (activeGroupKey.value === 'recent' && recentIcons.value.length === 0) {
@@ -170,3 +195,192 @@
     }
   })
 </script>
+
+<style scoped lang="scss">
+  .category-icon-picker {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .category-icon-picker__preview {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    color: var(--el-text-color-secondary);
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: var(--custom-radius);
+  }
+
+  .category-icon-picker__preview-icon {
+    font-size: 20px;
+  }
+
+  .category-icon-picker__preview-placeholder {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .category-icon-picker__dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .category-icon-picker__toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .category-icon-picker__toolbar-main {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .category-icon-picker__summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .category-icon-picker__summary-text {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--el-text-color-secondary);
+  }
+
+  .category-icon-picker__current {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-width: 0;
+    padding: 8px 10px;
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: var(--custom-radius);
+  }
+
+  .category-icon-picker__current-preview {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: calc(var(--custom-radius) - 2px);
+  }
+
+  .category-icon-picker__current-icon {
+    font-size: 18px;
+  }
+
+  .category-icon-picker__current-text {
+    min-width: 0;
+    max-width: 240px;
+    overflow: hidden;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--el-text-color-primary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .category-icon-picker__results {
+    max-height: min(64vh, 460px);
+    padding-right: 4px;
+  }
+
+  .category-icon-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .category-icon-picker__grid-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    height: 74px;
+    padding: 10px 8px;
+    color: var(--el-text-color-primary);
+    text-align: center;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: var(--custom-radius);
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .category-icon-picker__grid-item:hover,
+  .category-icon-picker__grid-item.is-active {
+    background: var(--el-fill-color-light);
+    border-color: var(--el-color-primary-light-5);
+  }
+
+  .category-icon-picker__grid-item.is-active {
+    color: var(--el-color-primary);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--el-color-primary) 18%, transparent);
+  }
+
+  .category-icon-picker__grid-icon {
+    font-size: 18px;
+  }
+
+  .category-icon-picker__grid-label {
+    width: 100%;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .category-icon-picker__empty {
+    grid-column: 1 / -1;
+    padding: 28px 0 20px;
+  }
+
+  :deep(.category-icon-picker__dialog .el-dialog) {
+    border-radius: calc(var(--custom-radius) + 2px);
+  }
+
+  :deep(.category-icon-picker__dialog .el-dialog__body) {
+    padding-top: 16px;
+  }
+
+  @media (width < 768px) {
+    .category-icon-picker__summary {
+      align-items: stretch;
+    }
+
+    .category-icon-picker__current {
+      width: 100%;
+    }
+
+    .category-icon-picker__current-text {
+      flex: 1;
+      max-width: none;
+    }
+
+    .category-icon-picker__grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>

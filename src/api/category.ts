@@ -27,6 +27,16 @@ export interface CategorySavePayload {
   description?: string
 }
 
+export interface CategorySortItem {
+  id: number
+  sort: number
+}
+
+export interface CategorySortPayload {
+  parentId: number
+  items: CategorySortItem[]
+}
+
 export interface CategoryTreeItem {
   id: number
   parentId: number
@@ -175,6 +185,19 @@ export function updateCategory(payload: CategorySavePayload): Promise<number> {
     url: CATEGORY_BASE_PATH,
     data: toCategorySaveReqVO(payload, id),
     showSuccessMessage: true
+  })
+}
+
+export function updateCategorySort(payload: CategorySortPayload): Promise<number> {
+  return request.put<number>({
+    url: `${CATEGORY_BASE_PATH}/sort`,
+    data: {
+      parentId: Number(payload.parentId ?? 0),
+      items: (payload.items || []).map((item) => ({
+        id: Number(item.id),
+        sort: Number(item.sort ?? 0)
+      }))
+    }
   })
 }
 
