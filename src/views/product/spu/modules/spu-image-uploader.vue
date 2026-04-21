@@ -18,7 +18,7 @@
     <div v-if="tip" class="mt-2 text-xs leading-6 text-g-600">{{ tip }}</div>
 
     <ElDialog v-model="previewVisible" title="图片预览" width="520px">
-      <img :src="previewUrl" alt="preview" class="w-full rounded-md" />
+      <img :src="previewUrl" alt="preview" class="spu-image-uploader__preview w-full" />
     </ElDialog>
   </div>
 </template>
@@ -105,10 +105,14 @@
 </script>
 
 <style scoped lang="scss">
+  .spu-image-uploader__preview {
+    border-radius: calc(var(--custom-radius) / 2 + 2px);
+  }
+
   .spu-image-uploader__upload {
     :deep(.el-upload--picture-card),
     :deep(.el-upload-list__item) {
-      border-radius: calc(var(--shop-control-radius) + 1px);
+      border-radius: calc(var(--custom-radius) / 2 + 2px);
     }
 
     :deep(.el-upload--picture-card) {

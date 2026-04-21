@@ -100,7 +100,7 @@
           <div class="space-y-4">
             <ElFormItem label="商品参数">
               <div
-                class="w-full rounded-xl border border-dashed border-[var(--el-border-color)] p-4"
+                class="spu-detail-page__param-panel w-full border border-dashed border-[var(--el-border-color)] p-4"
               >
                 <ElEmpty
                   v-if="!form.categoryId"
@@ -357,7 +357,7 @@
             <div
               v-for="item in submitChecks"
               :key="item.label"
-              class="flex items-center justify-between rounded-lg border border-[var(--el-border-color-light)] px-3 py-2"
+              class="spu-detail-page__check-row flex items-center justify-between border border-[var(--el-border-color-light)] px-3 py-2"
             >
               <span class="text-sm text-[var(--el-text-color-secondary)]">{{ item.label }}</span>
               <ElTag :type="item.done ? 'success' : 'warning'" effect="light">
@@ -1007,6 +1007,14 @@
 </script>
 
 <style scoped lang="scss">
+  .spu-detail-page__param-panel {
+    border-radius: var(--custom-radius);
+  }
+
+  .spu-detail-page__check-row {
+    border-radius: calc(var(--custom-radius) / 2 + 2px);
+  }
+
   .spu-detail-page__sku-card {
     scroll-margin-top: 88px;
   }

@@ -38,7 +38,7 @@
         </template>
       </ElTableColumn>
 
-      <ElTableColumn label="秒杀价" width="140" align="center">
+      <ElTableColumn label="秒杀价" width="180" align="center">
         <template #default="{ row }">
           <ElInputNumber
             v-model="row.flashPrice"
@@ -50,19 +50,19 @@
         </template>
       </ElTableColumn>
 
-      <ElTableColumn label="秒杀库存" width="128" align="center">
+      <ElTableColumn label="秒杀库存" width="180" align="center">
         <template #default="{ row }">
           <ElInputNumber v-model="row.flashStock" :min="1" :controls="false" class="w-full" />
         </template>
       </ElTableColumn>
 
-      <ElTableColumn label="限购数量" width="128" align="center">
+      <ElTableColumn label="限购数量" width="180" align="center">
         <template #default="{ row }">
           <ElInputNumber v-model="row.flashLimit" :min="1" :controls="false" class="w-full" />
         </template>
       </ElTableColumn>
 
-      <ElTableColumn label="排序" width="96" align="center">
+      <ElTableColumn label="排序" width="180" align="center">
         <template #default="{ row }">
           <ElInputNumber v-model="row.sort" :min="0" :controls="false" class="w-full" />
         </template>

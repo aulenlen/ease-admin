@@ -145,31 +145,31 @@
         {
           prop: 'name',
           label: '场次信息',
-          minWidth: 220,
+          minWidth: 240,
           formatter: (row) => renderSessionInfo(row)
         },
         {
           prop: 'timeRange',
           label: '场次时间',
-          minWidth: 280,
-          formatter: (row) => formatFlashSessionRange(row)
+          minWidth: 320,
+          formatter: (row) => renderSessionRange(row)
         },
         {
           prop: 'runtime',
           label: '运行状态',
-          width: 110,
+          minWidth: 150,
           formatter: (row) => renderSessionRuntime(row)
         },
         {
           prop: 'sessionStatus',
           label: '启用状态',
-          width: 132,
+          minWidth: 150,
           formatter: (row) => renderSessionStatus(row)
         },
         {
           prop: 'operation',
           label: '操作',
-          width: 136,
+          width: 132,
           fixed: 'right',
           formatter: (row) => renderSessionOperation(row)
         }
@@ -181,6 +181,9 @@
     selectedSessionIds.value = []
     tableRef.value?.elTableRef?.clearSelection?.()
   }
+
+  const renderSessionRange = (row: FlashSessionItem) =>
+    h('span', { class: 'text-xs text-g-500 whitespace-nowrap' }, formatFlashSessionRange(row))
 
   const isSwitching = (id: number) => switchingSessionIds.value.includes(id)
 

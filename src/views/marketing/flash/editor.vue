@@ -1,5 +1,5 @@
 <template>
-  <div class="flash-editor flex flex-col gap-3">
+  <div class="flash-editor art-full-height flex flex-col gap-3">
     <div class="flex items-center justify-between gap-3">
       <div class="flex min-w-0 items-center gap-3">
         <ArtIconButton icon="ri:arrow-left-line" @click="handleCancel" />
@@ -493,6 +493,16 @@
 </script>
 
 <style scoped lang="scss">
+  .flash-editor {
+    min-height: 0;
+  }
+
+  :deep(.flash-editor > .ease-table-page) {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+  }
+
   :deep(.flash-editor__table-row) {
     cursor: pointer;
   }

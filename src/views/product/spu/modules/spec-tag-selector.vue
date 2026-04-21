@@ -176,7 +176,7 @@
     min-height: var(--el-component-size);
     padding: 3px 11px;
     background: var(--el-fill-color-blank);
-    border-radius: var(--el-border-radius-base);
+    border-radius: calc(var(--custom-radius) / 2 + 2px);
     box-shadow: 0 0 0 1px var(--el-border-color) inset;
     transition: box-shadow var(--el-transition-duration);
 
@@ -225,7 +225,7 @@
     cursor: pointer;
     background: #f7f8fa;
     border: 1px solid #e7eaf0;
-    border-radius: 8px;
+    border-radius: calc(var(--custom-radius) / 2 + 2px);
     transition:
       background-color 0.18s ease,
       border-color 0.18s ease,
@@ -250,7 +250,7 @@
     padding: 0 8px;
     font-size: 13px;
     line-height: 24px;
-    border-radius: 8px;
+    border-radius: calc(var(--custom-radius) / 2 + 2px);
   }
 
   :deep(.spec-tag-selector__selected-tag .el-tag__close) {

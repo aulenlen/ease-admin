@@ -91,7 +91,7 @@ export function formatFlashSessionRange(
   session?: Pick<FlashSessionItem, 'startTime' | 'endTime'> | null
 ) {
   if (!session) return '-'
-  return `${formatDateTime(session.startTime)} 至 ${formatDateTime(session.endTime)}`
+  return `${formatDateTime(session.startTime)} ~ ${formatDateTime(session.endTime)}`
 }
 
 export function getFlashSessionRuntimeText(

@@ -280,6 +280,17 @@
       height: auto;
     }
 
+    .ease-table-page__switchable-bar,
+    .ease-table-page__search-inline {
+      width: 100%;
+      min-width: 0;
+    }
+
+    :deep(.ease-table-page__search-inline > *) {
+      width: 100%;
+      min-width: 0;
+    }
+
     :deep(.ease-table-page__batch-actions.el-space) {
       width: 100%;
     }

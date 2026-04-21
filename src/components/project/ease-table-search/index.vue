@@ -51,8 +51,14 @@
   }
 
   :deep(.ease-table-search__row .el-input),
-  :deep(.ease-table-search__row .el-select) {
+  :deep(.ease-table-search__row .el-select),
+  :deep(.ease-table-search__row .el-cascader),
+  :deep(.ease-table-search__row .el-date-editor) {
     width: 100%;
+  }
+
+  :deep(.ease-table-search__row > *) {
+    min-width: 0;
   }
 
   .ease-table-search__filters {

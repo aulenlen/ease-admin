@@ -1,5 +1,5 @@
 <template>
-  <div class="placement-editor flex flex-col gap-3">
+  <div class="placement-editor art-full-height flex flex-col gap-3">
     <div class="flex items-center justify-between gap-3">
       <ArtIconButton icon="ri:arrow-left-line" @click="handleCancel" />
       <ElButton type="primary" :disabled="!slotInfo" @click="handleAdd" v-ripple>
@@ -39,13 +39,17 @@
         <ArtTable
           ref="tableRef"
           :loading="isLoading"
-          :data="filteredItems"
+          :data="pagedItems"
           :columns="columns"
+          :pagination="pagination"
+          :pagination-options="{ hideOnSinglePage: false, align: 'right' }"
           :row-class-name="getRowClassName"
           :show-table-header="false"
           :empty-text="emptyText"
           row-key="id"
           @row-click="handleRowClick"
+          @pagination:size-change="handleSizeChange"
+          @pagination:current-change="handleCurrentChange"
         />
       </template>
     </EaseTablePage>
@@ -95,6 +99,11 @@
     status?: number | ''
   }
 
+  interface PageDragEvent {
+    oldIndex?: number
+    newIndex?: number
+  }
+
   const route = useRoute()
   const router = useRouter()
 
@@ -102,6 +111,10 @@
   const showSearchBar = ref(true)
   const slotInfo = ref<SlotDetailItem | null>(null)
   const slotItems = ref<SlotItem[]>([])
+  const paginationState = reactive({
+    current: 1,
+    size: 20
+  })
   const tableRef = ref<{
     elTableRef?: {
       $el?: HTMLElement
@@ -152,6 +165,15 @@
       return true
     })
   })
+  const pagination = computed<Api.Common.PaginationParams>(() => ({
+    current: paginationState.current,
+    size: paginationState.size,
+    total: filteredItems.value.length
+  }))
+  const pageStart = computed(() => (paginationState.current - 1) * paginationState.size)
+  const pagedItems = computed(() =>
+    filteredItems.value.slice(pageStart.value, pageStart.value + paginationState.size)
+  )
   const activeFilters = computed(() => {
     const filters: Array<{ key: keyof SlotItemSearchForm; label: string }> = []
 
@@ -226,8 +248,26 @@
   const normalizeItems = (items: SlotItem[]) =>
     items.map((item, index) => ({ ...item, sort: index }))
 
+  function moveItems(list: SlotItem[], from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list
+
+    const next = [...list]
+    const [target] = next.splice(from, 1)
+    next.splice(to, 0, target)
+    return next
+  }
+
   function removeFilter(key: keyof SlotItemSearchForm) {
     searchForm.value[key] = undefined
+  }
+
+  function handleSizeChange(size: number) {
+    paginationState.size = size
+    paginationState.current = 1
+  }
+
+  function handleCurrentChange(current: number) {
+    paginationState.current = current
   }
 
   const handleCancel = () => {
@@ -323,10 +363,11 @@
       return h('span', { class: 'text-xs text-g-500' }, '—')
     }
 
-    return h('div', { class: 'text-xs text-g-500 leading-tight' }, [
-      h('div', row.startTime?.slice(0, 10) || '不限'),
-      h('div', `~ ${row.endTime?.slice(0, 10) || '不限'}`)
-    ])
+    return h(
+      'span',
+      { class: 'text-xs text-g-500 whitespace-nowrap' },
+      `${row.startTime?.slice(0, 10) || '不限'} ~ ${row.endTime?.slice(0, 10) || '不限'}`
+    )
   }
 
   function renderOperation(row: SlotItem) {
@@ -471,6 +512,19 @@
     }
   }
 
+  function handlePageDragUpdate(event: PageDragEvent) {
+    if (hasFilter.value) return
+
+    const { oldIndex, newIndex } = event
+    if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) return
+
+    slotItems.value = moveItems(
+      slotItems.value,
+      pageStart.value + oldIndex,
+      pageStart.value + newIndex
+    )
+  }
+
   async function toggleRowStatus(row: SlotItem) {
     if (!row.id) {
       ElMessage.warning('投放项尚未保存，请稍后再试')
@@ -561,6 +615,24 @@
   )
 
   watch(
+    () => [searchForm.value.keyword?.trim() || '', searchForm.value.status ?? ''],
+    () => {
+      paginationState.current = 1
+    }
+  )
+
+  watch(
+    () => [filteredItems.value.length, paginationState.size],
+    () => {
+      const maxPage = Math.max(1, Math.ceil(filteredItems.value.length / paginationState.size) || 1)
+      if (paginationState.current > maxPage) {
+        paginationState.current = maxPage
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(
     () => [filteredItems.value.length, hasFilter.value],
     () => {
       nextTick(() => {
@@ -570,15 +642,26 @@
     { flush: 'post' }
   )
 
-  useDraggable(tbodyRef, slotItems, {
+  useDraggable<SlotItem>(tbodyRef, {
     handle: '.slot-item-drag-handle:not(.is-disabled)',
     animation: 180,
     ghostClass: 'slot-item-row--ghost',
+    customUpdate: handlePageDragUpdate,
     onEnd: () => handleReorder()
   })
 </script>
 
 <style scoped lang="scss">
+  .placement-editor {
+    min-height: 0;
+  }
+
+  :deep(.placement-editor > .ease-table-page) {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+  }
+
   .slot-item-drag-handle {
     font-size: 16px;
     color: var(--el-text-color-placeholder);

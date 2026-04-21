@@ -735,6 +735,64 @@
     }
   }
 
+  .article-content-editor__heading-input {
+    --article-heading-font-size: 30px;
+    --article-heading-line-height: 1.28;
+    --article-heading-font-weight: 800;
+    --article-heading-letter-spacing: -0.025em;
+  }
+
+  .article-content-editor__heading-input :deep(.el-textarea__inner) {
+    padding: 12px 14px;
+    font-size: var(--article-heading-font-size);
+    font-weight: var(--article-heading-font-weight);
+    line-height: var(--article-heading-line-height);
+    color: var(--el-text-color-primary);
+    letter-spacing: var(--article-heading-letter-spacing);
+  }
+
+  .article-content-editor__heading-input :deep(.el-textarea__inner::placeholder) {
+    font-size: var(--article-heading-font-size);
+    font-weight: calc(var(--article-heading-font-weight) - 100);
+    line-height: var(--article-heading-line-height);
+    letter-spacing: var(--article-heading-letter-spacing);
+  }
+
+  .article-content-editor__heading-input.is-h2 {
+    --article-heading-font-size: 26px;
+    --article-heading-line-height: 1.32;
+    --article-heading-font-weight: 760;
+    --article-heading-letter-spacing: -0.02em;
+  }
+
+  .article-content-editor__heading-input.is-h3 {
+    --article-heading-font-size: 22px;
+    --article-heading-line-height: 1.36;
+    --article-heading-font-weight: 720;
+    --article-heading-letter-spacing: -0.015em;
+  }
+
+  .article-content-editor__heading-input.is-h4 {
+    --article-heading-font-size: 19px;
+    --article-heading-line-height: 1.42;
+    --article-heading-font-weight: 680;
+    --article-heading-letter-spacing: -0.01em;
+  }
+
+  .article-content-editor__heading-input.is-h5 {
+    --article-heading-font-size: 17px;
+    --article-heading-line-height: 1.5;
+    --article-heading-font-weight: 640;
+    --article-heading-letter-spacing: -0.005em;
+  }
+
+  .article-content-editor__heading-input.is-h6 {
+    --article-heading-font-size: 15px;
+    --article-heading-line-height: 1.56;
+    --article-heading-font-weight: 620;
+    --article-heading-letter-spacing: 0;
+  }
+
   .article-content-editor__textarea.is-lead :deep(.el-textarea__inner) {
     font-size: 15px;
     line-height: 1.8;

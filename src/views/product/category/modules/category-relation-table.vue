@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+  import { ElTag } from 'element-plus'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import EaseTablePage from '@/components/project/ease-table-page/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
