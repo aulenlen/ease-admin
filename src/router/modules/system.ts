@@ -78,7 +78,8 @@ export const systemRoutes: AppRouteRecord = {
       meta: {
         title: 'menus.system.nested',
         icon: 'ri:menu-unfold-3-line',
-        keepAlive: true
+        keepAlive: true,
+        isHide: true
       },
       children: [
         {
