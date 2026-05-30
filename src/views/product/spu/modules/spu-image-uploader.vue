@@ -15,16 +15,29 @@
       <ElIcon><Plus /></ElIcon>
     </ElUpload>
 
+    <ElButton link type="primary" class="mt-2" @click="openMediaPicker"> 从文件库添加 </ElButton>
+
     <div v-if="tip" class="mt-2 text-xs leading-6 text-g-600">{{ tip }}</div>
 
     <ElDialog v-model="previewVisible" title="图片预览" width="520px">
       <img :src="previewUrl" alt="preview" class="spu-image-uploader__preview w-full" />
     </ElDialog>
+
+    <EaseMediaPicker
+      v-model="mediaPickerVisible"
+      :multiple="multiple"
+      :limit="limit"
+      media-type="IMAGE"
+      type-locked
+      :selected-urls="modelValue"
+      @confirm="handleMediaConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { uploadMedia } from '@/api/media'
+  import { uploadMedia, type MediaFileItem } from '@/api/media'
+  import EaseMediaPicker from '@/components/project/ease-media-picker/index.vue'
   import { Plus } from '@element-plus/icons-vue'
   import type { UploadFile, UploadProps, UploadRequestOptions, UploadUserFile } from 'element-plus'
 
@@ -47,6 +60,7 @@
 
   const previewVisible = ref(false)
   const previewUrl = ref('')
+  const mediaPickerVisible = ref(false)
 
   const fileList = computed<UploadUserFile[]>(() =>
     (props.modelValue || []).map((url, index) => ({
@@ -101,6 +115,38 @@
   const handlePreview = (file: UploadFile) => {
     previewUrl.value = file.url || ''
     previewVisible.value = true
+  }
+
+  const openMediaPicker = () => {
+    mediaPickerVisible.value = true
+  }
+
+  const handleMediaConfirm = (items: MediaFileItem[]) => {
+    const urls = items.map((item) => item.url).filter(Boolean)
+    if (!urls.length) return
+
+    if (!props.multiple) {
+      updateValue([urls[0]])
+      return
+    }
+
+    const nextList = [...(props.modelValue || [])]
+    let skipped = 0
+
+    for (const url of urls) {
+      if (nextList.includes(url)) continue
+      if (nextList.length >= props.limit) {
+        skipped += 1
+        continue
+      }
+      nextList.push(url)
+    }
+
+    if (skipped > 0) {
+      ElMessage.warning(`最多选择 ${props.limit} 张图片`)
+    }
+
+    updateValue(nextList)
   }
 </script>
 

@@ -6,16 +6,24 @@
           <!-- 规格列：图片 + 规格文本 -->
           <template #specImage="{ row, $index }">
             <div class="flex items-center gap-3">
-              <div class="cursor-pointer shrink-0" @click="pickImage($index)">
+              <div class="shrink-0">
                 <ElImage v-if="row.pic" :src="row.pic" fit="cover" class="size-12 rounded" />
                 <div
                   v-else
                   class="flex size-12 items-center justify-center rounded border border-dashed border-[var(--el-border-color)] text-xs text-[var(--el-text-color-secondary)]"
                 >
-                  上传
+                  图片
                 </div>
               </div>
-              <span class="text-sm">{{ formatSpecLabel(row) }}</span>
+              <div class="min-w-0">
+                <span class="block text-sm">{{ formatSpecLabel(row) }}</span>
+                <div class="mt-1 flex items-center gap-2">
+                  <ElButton link type="primary" size="small" @click="openMediaPicker($index)">
+                    文件库
+                  </ElButton>
+                  <ElButton link size="small" @click="pickImage($index)">上传</ElButton>
+                </div>
+              </div>
             </div>
           </template>
 
@@ -69,14 +77,23 @@
       class="hidden"
       @change="handleFileChange"
     />
+
+    <EaseMediaPicker
+      v-model="mediaPickerVisible"
+      media-type="IMAGE"
+      type-locked
+      :selected-urls="currentSkuPic ? [currentSkuPic] : []"
+      @confirm="handleMediaConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
   import EaseTablePage from '@/components/project/ease-table-page/index.vue'
+  import EaseMediaPicker from '@/components/project/ease-media-picker/index.vue'
   import ArtTable from '@/components/core/tables/art-table/index.vue'
   import { useTableColumns } from '@/hooks/core/useTableColumns'
-  import { uploadMedia } from '@/api/media'
+  import { uploadMedia, type MediaFileItem } from '@/api/media'
   import type { AttrValueItem, SpuFormSkuItem } from '@/api/spu'
 
   interface Props {
@@ -91,10 +108,17 @@
 
   const fileInputRef = ref<HTMLInputElement>()
   const currentImageIndex = ref<number | null>(null)
+  const mediaPickerVisible = ref(false)
 
   const rows = computed({
     get: () => props.modelValue || [],
     set: (value) => emit('update:modelValue', value)
+  })
+
+  const currentSkuPic = computed(() => {
+    const index = currentImageIndex.value
+    if (index === null) return ''
+    return rows.value[index]?.pic || ''
   })
 
   const parseSpecs = (value?: string): AttrValueItem[] => {
@@ -119,6 +143,11 @@
     fileInputRef.value?.click()
   }
 
+  const openMediaPicker = (index: number) => {
+    currentImageIndex.value = index
+    mediaPickerVisible.value = true
+  }
+
   const handleFileChange = async (event: Event) => {
     const input = event.target as HTMLInputElement
     const file = input.files?.[0]
@@ -139,6 +168,25 @@
       currentImageIndex.value = null
     }
   }
+
+  const handleMediaConfirm = (items: MediaFileItem[]) => {
+    const index = currentImageIndex.value
+    const selected = items[0]
+    if (index === null || !selected?.url) return
+
+    const nextRows = [...rows.value]
+    nextRows[index] = {
+      ...nextRows[index],
+      pic: selected.url
+    }
+    rows.value = nextRows
+    currentImageIndex.value = null
+  }
+
+  watch(mediaPickerVisible, (visible) => {
+    if (visible) return
+    currentImageIndex.value = null
+  })
 
   const handleDeleteSku = (index: number) => {
     const nextRows = [...rows.value]

@@ -203,6 +203,30 @@ interface SlotItemReqVO {
   note?: string
 }
 
+function formatBackendDateTime(value?: string | Date | number | null): string | undefined {
+  if (!value) return undefined
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return undefined
+
+    const matched = trimmed.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})/)
+    if (matched) return `${matched[1]} ${matched[2]}`
+  }
+
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return undefined
+
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  const hours = `${date.getHours()}`.padStart(2, '0')
+  const minutes = `${date.getMinutes()}`.padStart(2, '0')
+  const seconds = `${date.getSeconds()}`.padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 function toSlotListItem(item: SlotRespVO): SlotListItem {
   return {
     id: item.id,
@@ -344,8 +368,8 @@ function toSlotItemReqVO(item: SlotItemSavePayload): SlotItemReqVO {
       articleId: item.articleId,
       sort: item.sort,
       status: item.status,
-      startTime: item.startTime,
-      endTime: item.endTime,
+      startTime: formatBackendDateTime(item.startTime),
+      endTime: formatBackendDateTime(item.endTime),
       note: String(item.note || '').trim() || undefined
     }
   }
@@ -360,8 +384,8 @@ function toSlotItemReqVO(item: SlotItemSavePayload): SlotItemReqVO {
     url: jumpPayload.url,
     sort: item.sort,
     status: item.status,
-    startTime: item.startTime,
-    endTime: item.endTime,
+    startTime: formatBackendDateTime(item.startTime),
+    endTime: formatBackendDateTime(item.endTime),
     note: String(item.note || '').trim() || undefined
   }
 }

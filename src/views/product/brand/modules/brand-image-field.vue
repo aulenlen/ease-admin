@@ -32,6 +32,7 @@
         <ElButton link type="primary" :disabled="uploading" @click="openCropDialog">
           {{ uploading ? '上传中...' : value ? '重新裁剪' : '裁剪上传' }}
         </ElButton>
+        <ElButton link type="primary" @click="openMediaPicker"> 从文件库选择 </ElButton>
         <ElButton link @click="toggleManualInput">
           {{ showManualInput ? '收起地址' : '使用地址' }}
         </ElButton>
@@ -55,11 +56,20 @@
       @crop-done="handleCropDone"
       @error="handleCropError"
     />
+
+    <EaseMediaPicker
+      v-model="mediaPickerVisible"
+      media-type="IMAGE"
+      type-locked
+      :selected-urls="value ? [value] : []"
+      @confirm="handleMediaConfirm"
+    />
   </article>
 </template>
 
 <script setup lang="ts">
-  import { uploadMedia } from '@/api/media'
+  import { uploadMedia, type MediaFileItem } from '@/api/media'
+  import EaseMediaPicker from '@/components/project/ease-media-picker/index.vue'
   import BrandCropDialog from './brand-crop-dialog.vue'
   import { Plus } from '@element-plus/icons-vue'
   import { ElMessage } from 'element-plus'
@@ -96,6 +106,7 @@
   const uploading = ref(false)
   const showManualInput = ref(false)
   const cropDialogVisible = ref(false)
+  const mediaPickerVisible = ref(false)
   const { width } = useWindowSize()
 
   const value = computed({
@@ -122,8 +133,18 @@
     cropDialogVisible.value = true
   }
 
+  const openMediaPicker = () => {
+    mediaPickerVisible.value = true
+  }
+
   const handleCropError = (error: unknown) => {
     console.error('裁剪失败:', error)
+  }
+
+  const handleMediaConfirm = (items: MediaFileItem[]) => {
+    const selected = items[0]
+    if (!selected?.url) return
+    value.value = selected.url
   }
 
   const handleCropDone = async (result: CropResult) => {

@@ -41,6 +41,16 @@ export const marketingRoutes: AppRouteRecord = {
       }
     },
     {
+      path: 'content/media',
+      name: 'MarketingMedia',
+      component: '/marketing/content/media/index',
+      meta: {
+        title: '素材库',
+        icon: 'ri:folder-image-line',
+        keepAlive: true
+      }
+    },
+    {
       path: 'content/create',
       name: 'MarketingArticleCreate',
       component: '/marketing/content/article/editor',

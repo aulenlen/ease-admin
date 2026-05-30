@@ -78,15 +78,25 @@
       </div>
 
       <div class="category-image-field__actions">
+        <ElButton text type="primary" @click="openMediaPicker">从文件库选择</ElButton>
         <ElButton text @click="popoverVisible = false">关闭</ElButton>
         <ElButton v-if="modelValue" text type="danger" @click="clearValue">清空</ElButton>
       </div>
     </div>
   </ElPopover>
+
+  <EaseMediaPicker
+    v-model="mediaPickerVisible"
+    media-type="IMAGE"
+    type-locked
+    :selected-urls="modelValue ? [modelValue] : []"
+    @confirm="handleMediaConfirm"
+  />
 </template>
 
 <script setup lang="ts">
-  import { uploadMedia } from '@/api/media'
+  import { uploadMedia, type MediaFileItem } from '@/api/media'
+  import EaseMediaPicker from '@/components/project/ease-media-picker/index.vue'
   import EaseSegmentTabs from '@/components/project/ease-segment-tabs/index.vue'
   import { Picture } from '@element-plus/icons-vue'
   import { useWindowSize } from '@vueuse/core'
@@ -111,6 +121,7 @@
   const activeTab = ref<'url' | 'upload'>('url')
   const draftValue = ref('')
   const uploading = ref(false)
+  const mediaPickerVisible = ref(false)
 
   const tabOptions = [
     { label: '图片地址', value: 'url' },
@@ -135,6 +146,20 @@
   function clearValue() {
     draftValue.value = ''
     emit('update:modelValue', '')
+    popoverVisible.value = false
+  }
+
+  function openMediaPicker() {
+    popoverVisible.value = false
+    mediaPickerVisible.value = true
+  }
+
+  function handleMediaConfirm(items: MediaFileItem[]) {
+    const selected = items[0]
+    if (!selected?.url) return
+
+    draftValue.value = selected.url
+    emit('update:modelValue', selected.url)
     popoverVisible.value = false
   }
 
