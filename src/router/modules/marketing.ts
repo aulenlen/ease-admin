@@ -79,6 +79,16 @@ export const marketingRoutes: AppRouteRecord = {
         isHide: true,
         activePath: '/marketing/content/placements'
       }
+    },
+    {
+      path: 'sign',
+      name: 'MarketingSign',
+      component: '/marketing/sign/index',
+      meta: {
+        title: '签到管理',
+        icon: 'ri:calendar-check-line',
+        keepAlive: true
+      }
     }
   ]
 }
